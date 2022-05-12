@@ -6,10 +6,10 @@
 #include "winrt/Windows.UI.Input.Spatial.h"
 #include "Cannon/MixedReality.h"
 #include <mutex>
-#include "EyeGazeHandler.h"
 #include <iostream>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Web.Syndication.h>
+#include "EyeGazeHandler.h"
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Capture;
@@ -19,28 +19,17 @@ using namespace winrt::Windows::Perception::Spatial;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Storage::Streams;
 
-struct HeTHaTEyeFrame
-{
-	DirectX::XMMATRIX headTransform;
-	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> leftHandTransform;
-	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> rightHandTransform;
-	DirectX::XMVECTOR eyeGazeOrigin;
-	DirectX::XMVECTOR eyeGazeDirection;
-	float eyeGazeDistance;
-	bool leftHandPresent;
-	bool rightHandPresent;
-	bool eyeGazePresent;
-	long long timestamp;
-};
+
 
 
 void DumpEyeGazeIfPresentElseZero(bool present, const XMVECTOR& origin, const XMVECTOR& direction, float distance, std::ostream& out)
 {
 	XMFLOAT4 zeros{ 0, 0, 0, 0 };
 	XMVECTOR zero4 = XMLoadFloat4(&zeros);
-	/*out << present << ",";
-	if (present)
+	out << present << ",";
+	/*if (present)
 	{
+		
 		out << origin << "," << direction;
 	}
 	else
@@ -126,11 +115,12 @@ IAsyncAction EyeGazeStreamer::InitializeAsync(
 	 while (!pStreamer->m_fExit)
 	 {
 		 std::lock_guard<std::shared_mutex> reader_guard(pStreamer->m_frameMutex);
-		 if (pStreamer->m_latestFrame)
+		 if (pStreamer->m_latestFrameExists)
 		 {
-			 auto frame = pStreamer->m_latestFrame;
-			 long long timestamp = pStreamer->m_converter.RelativeTicksToAbsoluteTicks(
-				 HundredsOfNanoseconds(frame.SystemRelativeTime().Value().count())).count();
+			 HeTHaTEyeFrame frame = pStreamer->m_latestFrame;
+			 long long timestamp = pStreamer->m_latestFrame.timestamp;
+			 //long long timestamp = pStreamer->m_converter.RelativeTicksToAbsoluteTicks(
+			 //	 HundredsOfNanoseconds(frame.SystemRelativeTime().Value().count())).count();
 
 			 if (timestamp != pStreamer->m_latestTimestamp)
 			 {
@@ -146,7 +136,7 @@ IAsyncAction EyeGazeStreamer::InitializeAsync(
 	 }
 }
  void EyeGazeStreamer::SendFrame(
-	 MediaFrameReference pFrame, long long pTimestamp)
+	 HeTHaTEyeFrame pFrame, long long pTimestamp)
  {
 	 OutputDebugStringW(L"EyeStreamer::SendFrame: Received eye for sending!\n");
 	 if (!m_streamSocket || !m_writer)
@@ -159,9 +149,12 @@ IAsyncAction EyeGazeStreamer::InitializeAsync(
 		 OutputDebugStringW(L"Streamer::SendFrame: Streaming disabled.\n");
 		 return;
 	 }
+
+	 //m_writer.WriteBytes();
+	 
  }
 
-void getEyegaze() {
+ HeTHaTEyeFrame getEyegaze() {
 
 	HeTHaTEyeFrame frame;
 
@@ -193,5 +186,6 @@ void getEyegaze() {
 	}
 
 	//DumpEyeGazeIfPresentElseZero(frame.eyeGazePresent, frame.eyeGazeOrigin, frame.eyeGazeDirection, frame.eyeGazeDistance, file);
+	return frame;
 }
 

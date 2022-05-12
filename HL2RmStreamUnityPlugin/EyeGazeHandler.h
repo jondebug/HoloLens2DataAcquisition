@@ -1,4 +1,28 @@
 #pragma once
+#include "pch.h"
+#include "winrt/base.h"
+//#include <winrt/Windows.Foundation.Collections.0.h>
+//#include <winrt/Windows.Foundation.h>
+#include "winrt/Windows.UI.Input.Spatial.h"
+#include "Cannon/MixedReality.h"
+#include <mutex>
+#include <iostream>
+#include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Web.Syndication.h>
+#include "EyeGazeHandler.h"
+struct HeTHaTEyeFrame
+{
+	DirectX::XMMATRIX headTransform;
+	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> leftHandTransform;
+	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> rightHandTransform;
+	DirectX::XMVECTOR eyeGazeOrigin;
+	DirectX::XMVECTOR eyeGazeDirection;
+	float eyeGazeDistance;
+	bool leftHandPresent;
+	bool rightHandPresent;
+	bool eyeGazePresent;
+	long long timestamp;
+};
 
 class EyeGazeStreamer
 {
@@ -33,17 +57,15 @@ private:
 
 	static void EyeStreamThread(EyeGazeStreamer* pProcessor);
 
-	void SendFrame(
-		winrt::Windows::Media::Capture::Frames::MediaFrameReference pFrame,
-		long long pTimestamp);
+	void SendFrame(HeTHaTEyeFrame pFrame,	long long pTimestamp);
 
 	//void WriteMatrix4x4(
 	//	_In_ winrt::Windows::Foundation::Numerics::float4x4 matrix);
 
 	std::shared_mutex m_frameMutex;
 	long long m_latestTimestamp = 0;
-	winrt::Windows::Media::Capture::Frames::MediaFrameReference m_latestFrame = nullptr;
-
+	HeTHaTEyeFrame m_latestFrame;
+	bool m_latestFrameExists = true;
 	winrt::Windows::Media::Capture::Frames::MediaFrameReader m_mediaFrameReader = nullptr;
 	winrt::event_token m_OnFrameArrivedRegistration;
 
