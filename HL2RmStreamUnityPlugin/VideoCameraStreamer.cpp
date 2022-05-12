@@ -12,7 +12,7 @@ using namespace winrt::Windows::Perception::Spatial;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Storage::Streams;
 
-const int VideoCameraStreamer::kImageWidth = 640;
+const int VideoCameraStreamer::kImageWidth = 960;
 const wchar_t VideoCameraStreamer::kSensorName[3] = L"PV";
 
 

@@ -385,8 +385,10 @@ void Streamer::Send(
             {
                 d = pDepth[i];
             }
-            sensorByteData.push_back((BYTE)(d >> 8));
             sensorByteData.push_back((BYTE)d);
+            sensorByteData.push_back((BYTE)(d >> 8))
+            //sensorByteData.push_back((BYTE)(d >> 8));
+            //sensorByteData.push_back((BYTE)d);
         }
 
         if (pDepthFrame)
