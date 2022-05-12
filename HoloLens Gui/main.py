@@ -8,9 +8,17 @@ import FolderScript
 import threading
 import HoloLens_client
 import visualize
-
-
+import process_all
+from pathlib import Path
+import time
 # import PIL.Image, PIL.ImageTk
+folders_extensions = [('PV', 'bytes'),
+                      ('Depth AHaT', '[0-9].pgm'),
+                      ('Depth Long Throw', '[0-9].pgm'),
+                      ('VLC LF', '[0-9].pgm'),
+                      ('VLC RF', '[0-9].pgm'),
+                      ('VLC LL', '[0-9].pgm'),
+                      ('VLC RR', '[0-9].pgm')]
 
 Font_tuple = ("Comic Sans MS", 15, "bold")
 Second_font = ("Comic Sans MS", 10, "bold")
@@ -70,16 +78,29 @@ who_built.set("Choose")
 who_built.place(x=55, y=260)
 
 hololens_ip = Label(root,text = "insert HoloLens ip:", font = last_font)
-hololens_ip.place(x=55,y=500)
+hololens_ip.place(x=55,y=470)
 ip = tk.Entry(root)
-ip.insert(-1,"132.69.210.106")
-ip.place(x=280,y=510)
+ip.insert(-1,"132.69.210.105")
+ip.place(x=280,y=480)
+
 
 hololens_root_path = Label(root,text = "path to root directory:", font = last_font)
-hololens_root_path.place(x=55,y=530)
+hololens_root_path.place(x=55,y=500)
 root_path= tk.Entry(root)
 root_path.insert(-1,"C:\HoloLens")
-root_path.place(x=280,y=540)
+root_path.place(x=280,y=510)
+
+process_root_path = Label(root,text = "Process directory:", font = last_font)
+process_root_path.place(x=55,y=530)
+process_path= tk.Entry(root)
+process_path.insert(-1,"process path")
+process_path.place(x=280,y=540)
+
+video_root_path = Label(root,text = "Chosen video directory:", font = last_font)
+video_root_path.place(x=55,y=560)
+video_path= tk.Entry(root)
+video_path.insert(-1,"video path")
+video_path.place(x=280,y=570)
 
 def getSelection(combo_box, sec_combox, rd_combox, who_built,root_path,ip):
     global fullList
@@ -109,6 +130,48 @@ def Start_Process(last_path):
 def stop_process(fullList):
     fullList.clear()
 
+def check_framerates(capture_path):
+    HundredsOfNsToMilliseconds = 1e-4
+    MillisecondsToSeconds = 1e-3
+
+    def get_avg_delta(timestamps):
+        deltas = [(timestamps[i] - timestamps[i-1]) for i in range(1, len(timestamps))]
+        return np.mean(deltas)
+
+    for (img_folder, img_ext) in folders_extensions:
+        base_folder = capture_path / img_folder
+        paths = base_folder.glob('*%s' % img_ext)
+        timestamps = [int(path.stem) for path in paths]
+        if len(timestamps):
+            avg_delta = get_avg_delta(timestamps) * HundredsOfNsToMilliseconds
+            print('Average {} delta: {:.3f}ms, fps: {:.3f}'.format(
+                img_folder, avg_delta, 1/(avg_delta * MillisecondsToSeconds)))
+
+    head_hat_stream_path = capture_path.glob('*eye.csv')
+    try:
+        head_hat_stream_path = next(head_hat_stream_path)
+        timestamps = load_head_hand_eye_data(str(head_hat_stream_path))[0]
+        hh_avg_delta = get_avg_delta(timestamps) * HundredsOfNsToMilliseconds
+        print('Average hand/head delta: {:.3f}ms, fps: {:.3f}'.format(
+            hh_avg_delta, 1/(hh_avg_delta * MillisecondsToSeconds)))
+    except StopIteration:
+        pass
+
+
+def visualize_path(updated_path,video_path):
+    print(str(video_path.get()))
+    if(video_path.get()=="video path"):
+        visualize.visualize(updated_path)
+    else:
+        visualize.visualize(str(video_path.get()))
+
+def process_button(process_path):
+    if(process_path.get()=="process path"):
+        messagebox.showerror("Error", "Fill specific path")
+    else:
+        process_all.process_all(Path(process_path.get()))
+
+
 furniture = tk.Label(root, text="Pick a Furniture", font=Font_tuple)
 furniture.place(x=45, y=140)
 
@@ -125,20 +188,21 @@ start_button = tk.Button(root, text="Start",
                                           Start_Process(updated_path),
                                           HoloLens_client.display(root, duration_text, pv_text, AHAT_text)], image=picture)
 
-start_button.place(x=515, y=400)
+start_button.place(x=515, y=300)
 
 stop_pic = PhotoImage(file="stop.png")
 stop_button = tk.Button(root, text="Stop", image=stop_pic,
                         command=lambda: [ stop_process(fullList),HoloLens_client.display(root, duration_text, pv_text, AHAT_text),
                                          HoloLens_client.Stop(),HoloLens_client.counter(root, path_pv)])
-stop_button.place(x=515, y=475)
+stop_button.place(x=515, y=375)
 
 vid_pic = PhotoImage(file="new_vid.png")
-Video_Button = tk.Button(root, text="Video", image=vid_pic, command=lambda: [visualize.visualize(updated_path),print("updated path is",updated_path)])
+Video_Button = tk.Button(root, text="Video", image=vid_pic, command=lambda: [visualize_path(updated_path,video_path),print("updated path is",updated_path)])
 Video_Button.place(x=515, y=550)
 
-# calculate = tk.Button(root, text="calc", command=lambda: [FolderScript.counter(root,path_pv)])
-# calculate.place(x=25, y=550)
+process_pic = PhotoImage(file="process.png")
+process_Button = tk.Button(root, text="process", image=process_pic, command=lambda: [process_button(process_path)])
+process_Button.place(x=515, y=510)
 
 
 def buildingPath(FullList):
