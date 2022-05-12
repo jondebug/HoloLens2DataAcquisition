@@ -31,7 +31,7 @@ void __stdcall HL2Stream::StartStreaming()
 	InitializeResearchModeProcessing();
 
 	InitializeVideoFrameProcessorAsync();
-
+	InitializeEyeStreamerAsync();
 #if DBG_ENABLE_INFO_LOGGING
 	OutputDebugStringW(L"HL2Stream::StartStreaming: Done.\n");
 #endif
@@ -62,6 +62,22 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 	co_await m_videoFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23940");
 }
 
+winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeEyeStreamerAsync()
+{
+/*	if (m_videoFrameProcessorOperation &&
+		m_videoFrameProcessorOperation.Status() == winrt::Windows::Foundation::AsyncStatus::Completed)
+	{
+		return;
+	}
+*/
+	m_EyeFrameProcessor = std::make_unique<EyeGazeStreamer>();
+	if (!m_EyeFrameProcessor.get())
+	{
+		throw winrt::hresult(E_POINTER);
+	}
+
+	co_await m_EyeFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23945");
+}
 
 void HL2Stream::InitializeResearchModeSensors()
 {

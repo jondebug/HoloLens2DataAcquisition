@@ -11,16 +11,16 @@
 #include <deque>
 #include <codecvt>
 
-#include <winrt\base.h>
-#include <winrt\Windows.Foundation.h>
-#include <winrt\Windows.Foundation.Collections.h>
-#include <winrt\Windows.Networking.Sockets.h>
-#include <winrt\Windows.Storage.Streams.h>
-#include <winrt\Windows.Perception.Spatial.h>
-#include <winrt\Windows.Perception.Spatial.Preview.h>
-#include <winrt\Windows.Media.Capture.Frames.h>
-#include <winrt\Windows.Media.Devices.Core.h>
-#include <winrt\Windows.Graphics.Imaging.h>
+#include <.\Generated Files\winrt\base.h>
+#include <.\Generated Files\winrt\Windows.Foundation.h>
+#include <.\Generated Files\winrt\Windows.Foundation.Collections.h>
+#include <.\Generated Files\winrt\Windows.Networking.Sockets.h>
+#include <.\Generated Files\winrt\Windows.Storage.Streams.h>
+#include <.\Generated Files\winrt\Windows.Perception.Spatial.h>
+#include <.\Generated Files\winrt\Windows.Perception.Spatial.Preview.h>
+#include <.\Generated Files\winrt\Windows.Media.Capture.Frames.h>
+#include <.\Generated Files\winrt\Windows.Media.Devices.Core.h>
+#include <.\Generated Files\winrt\Windows.Graphics.Imaging.h>
 
 #include "TimeConverter.h"
 #include "ResearchModeApi.h"
@@ -28,3 +28,4 @@
 #include "ResearchModeFrameProcessor.h"
 #include "VideoCameraStreamer.h"
 #include "Streamer.h"
+#include "EyeGazeHandler.h"

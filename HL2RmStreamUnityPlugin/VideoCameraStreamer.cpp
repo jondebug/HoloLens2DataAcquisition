@@ -12,7 +12,7 @@ using namespace winrt::Windows::Perception::Spatial;
 using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Storage::Streams;
 
-const int VideoCameraStreamer::kImageWidth = 640;
+const int VideoCameraStreamer::kImageWidth = 960;
 const wchar_t VideoCameraStreamer::kSensorName[3] = L"PV";
 
 
@@ -181,7 +181,7 @@ void VideoCameraStreamer::OnConnectionReceived(
     try
     {
         m_streamSocket = args.Socket();
-        m_writer = args.Socket().OutputStream();
+        m_writer = (winrt::Windows::Storage::Streams::DataWriter)args.Socket().OutputStream();
         m_writer.UnicodeEncoding(UnicodeEncoding::Utf8);
         m_writer.ByteOrder(ByteOrder::LittleEndian);
 

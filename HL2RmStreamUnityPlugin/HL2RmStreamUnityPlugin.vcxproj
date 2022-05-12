@@ -83,7 +83,6 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -144,7 +143,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <GenerateManifest>false</GenerateManifest>
-    <IgnoreImportLibrary>false</IgnoreImportLibrary>
+    <IgnoreImportLibrary>true</IgnoreImportLibrary>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <GenerateManifest>false</GenerateManifest>
@@ -217,10 +216,12 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <PreprocessorDefinitions>FUNCTIONS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/await %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(GenerateFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
@@ -247,6 +248,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Cannon\AnimatedVector.h" />
+    <ClInclude Include="Cannon\Common\FileUtilities.h" />
+    <ClInclude Include="Cannon\Common\FilterDoubleExponential.h" />
+    <ClInclude Include="Cannon\Common\Intersectable.h" />
+    <ClInclude Include="Cannon\Common\Timer.h" />
+    <ClInclude Include="Cannon\DrawCall.h" />
+    <ClInclude Include="Cannon\FloatingSlate.h" />
+    <ClInclude Include="Cannon\FloatingText.h" />
+    <ClInclude Include="Cannon\MixedReality.h" />
+    <ClInclude Include="Cannon\RecordedValue.h" />
+    <ClInclude Include="Cannon\TrackedHands.h" />
+    <ClInclude Include="EyeGazeHandler.h" />
     <ClInclude Include="HL2RmStreamUnityPlugin.h" />
     <ClInclude Include="IResearchModeFrameSink.h" />
     <ClInclude Include="pch.h" />
@@ -258,7 +271,15 @@
     <ClInclude Include="VideoCameraStreamer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Cannon\AnimatedVector.cpp" />
+    <ClCompile Include="Cannon\DrawCall.cpp" />
+    <ClCompile Include="Cannon\FloatingSlate.cpp" />
+    <ClCompile Include="Cannon\FloatingText.cpp" />
+    <ClCompile Include="Cannon\MixedReality.cpp" />
+    <ClCompile Include="Cannon\RecordedValue.cpp" />
+    <ClCompile Include="Cannon\TrackedHands.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="EyeGazeHandler.cpp" />
     <ClCompile Include="HL2RmStreamUnityPlugin.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -274,6 +295,11 @@
     <ClCompile Include="Streamer.cpp" />
     <ClCompile Include="TimeConverter.cpp" />
     <ClCompile Include="VideoCameraStreamer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Windows.ApplicationModel.Calls.Background.CallsBackgroundContract">
+      <IsWinMDFile>true</IsWinMDFile>
+    </Reference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

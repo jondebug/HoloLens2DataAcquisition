@@ -17,6 +17,9 @@ namespace HL2Stream
 	winrt::Windows::Foundation::IAsyncAction
 		InitializeVideoFrameProcessorAsync();
 
+	winrt::Windows::Foundation::IAsyncAction 
+		InitializeEyeStreamerAsync();
+
 	void DisableSensors();
 
 	void InitializeResearchModeProcessing();
@@ -35,6 +38,7 @@ namespace HL2Stream
 	std::vector<ResearchModeSensorDescriptor> m_sensorDescriptors;
 
 	std::unique_ptr<VideoCameraStreamer> m_videoFrameProcessor = nullptr;
+	std::unique_ptr<EyeGazeStreamer> m_EyeFrameProcessor = nullptr;
 	winrt::Windows::Foundation::IAsyncAction m_videoFrameProcessorOperation = nullptr;
 
 	// sensor

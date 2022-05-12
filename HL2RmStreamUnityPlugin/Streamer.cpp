@@ -62,7 +62,7 @@ void Streamer::OnConnectionReceived(
     StreamSocketListenerConnectionReceivedEventArgs args)
 {
     m_streamSocket = args.Socket();
-    m_writer = args.Socket().OutputStream();
+    m_writer = (winrt::Windows::Storage::Streams::DataWriter)args.Socket().OutputStream();
     m_writer.UnicodeEncoding(UnicodeEncoding::Utf8);
     m_writer.ByteOrder(ByteOrder::LittleEndian);
 
@@ -385,8 +385,12 @@ void Streamer::Send(
             {
                 d = pDepth[i];
             }
-            sensorByteData.push_back((BYTE)(d >> 8));
+            //sensorByteData.push_back(d);
+            //sensorByteData.push_back((BYTE)(d >> 8));
+            //sensorByteData.push_back((BYTE)d);
             sensorByteData.push_back((BYTE)d);
+            sensorByteData.push_back((BYTE)(d >> 8));
+            
         }
 
         if (pDepthFrame)

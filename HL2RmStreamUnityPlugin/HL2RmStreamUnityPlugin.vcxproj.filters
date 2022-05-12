@@ -5,6 +5,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Cannon">
+      <UniqueIdentifier>{b02936c1-54de-4fb9-8de3-77ab3402b497}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cannon\Common">
+      <UniqueIdentifier>{65e48471-b7ea-4f80-a213-9d969f68f229}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cannon\Shaders">
+      <UniqueIdentifier>{db7cc34f-d9f9-4009-b8c2-1e97a7cc3f80}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -14,6 +23,28 @@
     <ClCompile Include="TimeConverter.cpp" />
     <ClCompile Include="ResearchModeFrameProcessor.cpp" />
     <ClCompile Include="VideoCameraStreamer.cpp" />
+    <ClCompile Include="EyeGazeHandler.cpp" />
+    <ClCompile Include="Cannon\AnimatedVector.cpp">
+      <Filter>Cannon</Filter>
+    </ClCompile>
+    <ClCompile Include="Cannon\DrawCall.cpp">
+      <Filter>Cannon</Filter>
+    </ClCompile>
+    <ClCompile Include="Cannon\FloatingSlate.cpp">
+      <Filter>Cannon</Filter>
+    </ClCompile>
+    <ClCompile Include="Cannon\FloatingText.cpp">
+      <Filter>Cannon</Filter>
+    </ClCompile>
+    <ClCompile Include="Cannon\RecordedValue.cpp">
+      <Filter>Cannon</Filter>
+    </ClCompile>
+    <ClCompile Include="Cannon\TrackedHands.cpp">
+      <Filter>Cannon</Filter>
+    </ClCompile>
+    <ClCompile Include="Cannon\MixedReality.cpp">
+      <Filter>Cannon</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HL2RmStreamUnityPlugin.h" />
@@ -25,5 +56,39 @@
     <ClInclude Include="TimeConverter.h" />
     <ClInclude Include="ResearchModeFrameProcessor.h" />
     <ClInclude Include="VideoCameraStreamer.h" />
+    <ClInclude Include="EyeGazeHandler.h" />
+    <ClInclude Include="Cannon\AnimatedVector.h">
+      <Filter>Cannon</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\DrawCall.h">
+      <Filter>Cannon</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\FloatingSlate.h">
+      <Filter>Cannon</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\FloatingText.h">
+      <Filter>Cannon</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\RecordedValue.h">
+      <Filter>Cannon</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\TrackedHands.h">
+      <Filter>Cannon</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\Common\FileUtilities.h">
+      <Filter>Cannon\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\Common\FilterDoubleExponential.h">
+      <Filter>Cannon\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\Common\Intersectable.h">
+      <Filter>Cannon\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\Common\Timer.h">
+      <Filter>Cannon\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Cannon\MixedReality.h">
+      <Filter>Cannon</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

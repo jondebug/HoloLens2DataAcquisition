@@ -34,14 +34,14 @@ public:
 	{
 	}
 
-	HundredsOfNanoseconds TimeConverter::RelativeTicksToAbsoluteTicks(const HundredsOfNanoseconds ticks) const
+	HundredsOfNanoseconds RelativeTicksToAbsoluteTicks(const HundredsOfNanoseconds ticks) const
 	{
 		return m_qpc2ft + ticks;
 	}
 
 private:
 
-	HundredsOfNanoseconds TimeConverter::UnsignedQpcToRelativeTicks(const uint64_t qpc) const
+	HundredsOfNanoseconds UnsignedQpcToRelativeTicks(const uint64_t qpc) const
 	{
 		static const std::uint64_t c_ticksPerSecond = 10'000'000;
 
@@ -52,7 +52,7 @@ private:
 			q * c_ticksPerSecond + (r * c_ticksPerSecond) / m_qpf.QuadPart);
 	}
 
-	HundredsOfNanoseconds TimeConverter::QpcToRelativeTicks(const int64_t qpc) const
+	HundredsOfNanoseconds QpcToRelativeTicks(const int64_t qpc) const
 	{
 		if (qpc < 0)
 		{
@@ -71,7 +71,7 @@ private:
 		return QpcToRelativeTicks(qpc.QuadPart);
 	}
 
-	HundredsOfNanoseconds TimeConverter::FileTimeToAbsoluteTicks(const FILETIME ft) const
+	HundredsOfNanoseconds FileTimeToAbsoluteTicks(const FILETIME ft) const
 	{
 		ULARGE_INTEGER ft_uli;
 

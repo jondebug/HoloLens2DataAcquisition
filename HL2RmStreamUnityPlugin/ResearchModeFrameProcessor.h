@@ -1,3 +1,4 @@
+#include <mutex>
 #pragma once
 class ResearchModeFrameProcessor
 {
