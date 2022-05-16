@@ -10,6 +10,16 @@ using namespace winrt::Windows::Perception;
 using namespace winrt::Windows::Perception::Spatial;
 using namespace winrt::Windows::Foundation::Numerics;
 
+
+namespace Depth
+{
+    enum InvalidationMasks
+    {
+        Invalid = 0x80,
+    };
+    static constexpr UINT16 AHAT_INVALID_VALUE = 4090;
+}
+
 Streamer::Streamer(
     std::wstring portName,
     const GUID& guid,
@@ -124,7 +134,7 @@ bool Streamer::SendExtrinsics(
     int imageHeight = resolution.Height;
 
     ResearchModeSensorType pSensorType = pSensor->GetSensorType();
-
+    // 
     if (pSensorType == DEPTH_AHAT)
     {
         IResearchModeSensorDepthFrame* pDepthFrame = nullptr;
@@ -141,6 +151,26 @@ bool Streamer::SendExtrinsics(
         if (pDepthFrame)
         {
             pDepthFrame->Release();
+        }
+    }
+
+    if (pSensorType == DEPTH_LONG_THROW)
+    {
+  
+        IResearchModeSensorDepthFrame* pLongDepthFrame = nullptr;
+        HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pLongDepthFrame));
+
+        if (!pLongDepthFrame)
+        {
+#if DBG_ENABLE_VERBOSE_LOGGING
+            OutputDebugStringW(L"Streamer::SendFrame: Failed to grab long throw depth frame.\n");
+#endif
+            return b_successful_write;
+        }
+
+        if (pLongDepthFrame)
+        {
+            pLongDepthFrame->Release();
         }
     }
 
@@ -348,7 +378,7 @@ void Streamer::Send(
     
     // grab the frame data
     std::vector<BYTE> sensorByteData;
-    
+    // depth ahat
     if (pSensorType == DEPTH_AHAT)
     {        
         IResearchModeSensorDepthFrame* pDepthFrame = nullptr;
@@ -396,6 +426,52 @@ void Streamer::Send(
             pDepthFrame->Release();
         }
     }
+    // depth long throw
+    if (pSensorType == DEPTH_LONG_THROW)
+    {
+        const BYTE* pSigma = nullptr;
+        size_t outSigmaBufferCount = 0;
+
+        IResearchModeSensorDepthFrame* pLongDepthFrame = nullptr;
+
+        const UINT16* pLongDepth = nullptr;
+        HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pLongDepthFrame));
+
+        if (!pLongDepth)
+        {
+#if DBG_ENABLE_VERBOSE_LOGGING
+            OutputDebugStringW(L"Streamer::SendFrame: Failed to grab depth frame.\n");
+#endif
+            return;
+        }
+        hr = pLongDepthFrame->GetSigmaBuffer(&pSigma, &outSigmaBufferCount);
+        hr = pLongDepthFrame->GetBuffer(&pLongDepth, &outBufferCount);
+        sensorByteData.reserve(outBufferCount * sizeof(UINT16));
+
+        // validate depth & append to vector
+        for (size_t i = 0; i < outBufferCount; ++i)
+        {
+            // use a different invalidation condition for Long Throw and AHAT 
+            const bool invalid = pSigma[i] & Depth::InvalidationMasks::Invalid > 0;
+            UINT16 d;
+            if (invalid)
+            {
+                d = 0;
+            }
+            else
+            {
+                d = pLongDepth[i];
+            }
+            sensorByteData.push_back((BYTE)d);
+            sensorByteData.push_back((BYTE)(d >> 8));
+        }
+
+        if (pLongDepthFrame)
+        {
+            pLongDepthFrame->Release();
+        }
+    }
+
 
     if (pSensorType == LEFT_FRONT)
     {

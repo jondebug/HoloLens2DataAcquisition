@@ -52,6 +52,7 @@ RM_FRAME_STREAM_HEADER = namedtuple(
 # Each port corresponds to a single stream type
 VIDEO_STREAM_PORT = 23940
 AHAT_STREAM_PORT = 23941
+LONG_THROW_STREAM_PORT = 23945
 LEFT_FRONT_STREAM_PORT = 23942
 RIGHT_FRONT_STREAM_PORT = 23943
 
@@ -202,6 +203,33 @@ class AhatReceiverThread(FrameReceiverThread):
         rig_to_world_transform = np.array(header[5:22]).reshape((4, 4)).T
         return rig_to_world_transform
 
+class LongThrowReceiverThread(FrameReceiverThread):
+
+    def __init__(self, host, port, header_format, header_data, find_extrinsics=False):
+        super().__init__(host, port, header_format, header_data, find_extrinsics)
+        self.lt_flag = False
+        self.prev_timestamp = 0
+
+    def listen(self):
+        while True:
+            if self.find_extrinsics:
+                if not np.any(self.lut):
+                    self.extrinsics_header, lut_data = self.get_extrinsics_from_socket(320, 288)
+                    self.lut = np.frombuffer(lut_data, dtype=np.float32).reshape((320 * 288, 3))
+            else:
+                self.latest_header, image_data = self.get_data_from_socket()
+
+                self.latest_frame = np.frombuffer(image_data, dtype=np.uint16).reshape(
+                    (self.latest_header.ImageHeight, self.latest_header.ImageWidth))
+
+                self.lt_flag = True
+                assert (self.prev_timestamp != self.latest_header.Timestamp)
+                self.prev_timestamp = self.latest_header.Timestamp
+
+    def get_mat_from_header(self, header):
+        rig_to_world_transform = np.array(header[5:22]).reshape((4, 4)).T
+        return rig_to_world_transform
+
 
 class SpatialCamsReceiverThread(FrameReceiverThread):
     def __init__(self, host, port, header_format, header_data, find_extrinsics=False):
@@ -319,9 +347,11 @@ def main_function(path,HOST):
     video_receiver = VideoReceiverThread(HOST)
     video_receiver.start_socket()
 
-    ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,
-                                            True)
+    ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
     ahat_extr_receiver.start_socket()
+    # long throw depth
+    lt_extr_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
+    lt_extr_receiver.start_socket()
 
    # lf_extr_receiver = SpatialCamsReceiverThread(HOST, LEFT_FRONT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT,
     #                                            RM_EXTRINSICS_HEADER, True)
@@ -333,10 +363,12 @@ def main_function(path,HOST):
 
     video_receiver.start_listen()
     ahat_extr_receiver.start_listen()
+    lt_extr_receiver.start_listen()
     # lf_extr_receiver.start_listen()
     # rf_extr_receiver.start_listen()
     first_line_flag = True
     ahat_receiver = None
+    lt_receiver = None
     lf_receiver = None
     rf_receiver = None
     save_one = 0
@@ -454,6 +486,68 @@ def main_function(path,HOST):
                 ahat_extr_receiver = None
                 ahat_receiver.start_socket()
                 ahat_receiver.start_listen()
+
+
+            # long throw depth
+            if lt_receiver and np.any(lt_receiver.latest_frame) and lt_receiver.lt_flag:
+                header = lt_receiver.latest_header
+                curr_lt_timestamp = header.Timestamp
+                cv2.imwrite(str(output_path) +r"\Depth Long Throw\\" +str(curr_lt_timestamp) + ".pgm", (lt_receiver.latest_frame).astype(np.uint16))
+                prev_timestamp_ahat = curr_ahat_timestamp
+                lt_receiver.lt_flag = False
+
+               # depth_img = ahat_receiver.latest_frame
+                depth_hdr = lt_receiver.latest_header
+                rig2world_transform = np.array([
+                    depth_hdr.rig2worldTransformM11, depth_hdr.rig2worldTransformM12, depth_hdr.rig2worldTransformM13,
+                    depth_hdr.rig2worldTransformM14,
+                    depth_hdr.rig2worldTransformM21, depth_hdr.rig2worldTransformM22, depth_hdr.rig2worldTransformM23,
+                    depth_hdr.rig2worldTransformM24,
+                    depth_hdr.rig2worldTransformM31, depth_hdr.rig2worldTransformM32, depth_hdr.rig2worldTransformM33,
+                    depth_hdr.rig2worldTransformM34,
+                    depth_hdr.rig2worldTransformM41, depth_hdr.rig2worldTransformM42, depth_hdr.rig2worldTransformM43,
+                    depth_hdr.rig2worldTransformM44]).reshape(4, 4)
+
+                rig2world_transform = np.transpose(rig2world_transform)
+                w2.writerow([curr_ahat_timestamp, rig2world_transform[0,0],rig2world_transform[0,1],rig2world_transform[0,2],rig2world_transform[0,3],
+                                                 rig2world_transform[1, 0],rig2world_transform[1,1],rig2world_transform[1,2],rig2world_transform[1,3],
+                                                 rig2world_transform[2, 0],rig2world_transform[2,1],rig2world_transform[2,2],rig2world_transform[2,3],
+                                                 rig2world_transform[3,0],rig2world_transform[3,1],rig2world_transform[3,2],rig2world_transform[3,3]])
+
+            if lt_extr_receiver and np.any(lt_extr_receiver.lut):
+                lt_extr_receiver.socket.close()
+                lt_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_STREAM_HEADER_FORMAT, RM_FRAME_STREAM_HEADER)
+
+                lt_receiver.extrinsics_header = lt_extr_receiver.extrinsics_header
+                lt_extr_receiver.lut.tofile(f4)
+
+                depth_hdr = lt_receiver.extrinsics_header
+                rig2cam_transform = np.array([
+                    depth_hdr.rig2camTransformM11, depth_hdr.rig2camTransformM12, depth_hdr.rig2camTransformM13,
+                    depth_hdr.rig2camTransformM14,
+                    depth_hdr.rig2camTransformM21, depth_hdr.rig2camTransformM22, depth_hdr.rig2camTransformM23,
+                    depth_hdr.rig2camTransformM24,
+                    depth_hdr.rig2camTransformM31, depth_hdr.rig2camTransformM32, depth_hdr.rig2camTransformM33,
+                    depth_hdr.rig2camTransformM34,
+                    depth_hdr.rig2camTransformM41, depth_hdr.rig2camTransformM42, depth_hdr.rig2camTransformM43,
+                    depth_hdr.rig2camTransformM44]).reshape(4, 4)
+
+
+                with open(output_path / 'Depth Long Throw_extrinsics.txt', 'w') as f3:
+                    w3 = csv.writer(f3)
+                    w3.writerow([rig2cam_transform[0, 0], rig2cam_transform[0, 1],
+                                  rig2cam_transform[0, 2], rig2cam_transform[0, 3],
+                                  rig2cam_transform[1, 0], rig2cam_transform[1, 1], rig2cam_transform[1, 2],
+                                  rig2cam_transform[1, 3],
+                                  rig2cam_transform[2, 0], rig2cam_transform[2, 1], rig2cam_transform[2, 2],
+                                  rig2cam_transform[2, 3],
+                                  rig2cam_transform[3, 0], rig2cam_transform[3, 1], rig2cam_transform[3, 2],
+                                  rig2cam_transform[3, 3]])
+
+
+                lt_extr_receiver = None
+                lt_receiver.start_socket()
+                lt_receiver.start_listen()
 
         # if lf_receiver and np.any(lf_receiver.latest_frame):
         #     #cv2.imshow('Left Front Camera Stream', lf_receiver.latest_frame)

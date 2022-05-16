@@ -116,6 +116,15 @@ void HL2Stream::InitializeResearchModeSensors()
 			OutputDebugStringW(msgBuffer);
 		}
 
+		if (sensorDescriptor.sensorType == DEPTH_LONG_THROW)
+		{
+			winrt::check_hresult(m_pSensorDevice->GetSensor(
+				sensorDescriptor.sensorType, &m_pLONGTHROWSensor));
+			swprintf_s(msgBuffer, L"Image2Face::InitializeSensors: Sensor %ls\n",
+				m_pLONGTHROWSensor->GetFriendlyName());
+			OutputDebugStringW(msgBuffer);
+		}
+
 		if (sensorDescriptor.sensorType == LEFT_FRONT)
 		{
 			winrt::check_hresult(m_pSensorDevice->GetSensor(
@@ -148,12 +157,24 @@ void HL2Stream::InitializeResearchModeProcessing()
 	auto ahatStreamer = std::make_shared<Streamer>(L"23941", guid, m_worldOrigin);
 	m_pAHATStreamer = ahatStreamer;
 
+	// Long throw streamer
+	auto LTStreamer = std::make_shared<Streamer>(L"23945", guid, m_worldOrigin);
+	m_pLONGTHROWStreamer = LTStreamer;
+
 	if (m_pAHATSensor)
 	{
 		auto processor = std::make_shared<ResearchModeFrameProcessor>(
 			m_pAHATSensor, camConsentGiven, &camAccessCheck, 0, m_pAHATStreamer);
 
 		m_pAHATProcessor = processor;
+	}
+
+	if (m_pLONGTHROWSensor)
+	{
+		auto processor = std::make_shared<ResearchModeFrameProcessor>(
+			m_pLONGTHROWSensor, camConsentGiven, &camAccessCheck, 0, m_pLONGTHROWStreamer);
+
+		m_pLONGTHROWProcessor = processor;
 	}
 
 	auto leftFrontStreamer = std::make_shared<Streamer>(L"23942", guid, m_worldOrigin);
@@ -200,6 +221,11 @@ void HL2Stream::DisableSensors()
 	{
 		m_pAHATSensor->Release();
 	}
+	if (m_pLONGTHROWSensor)
+	{
+		m_pLONGTHROWSensor->Release();
+	}
+
 	if (m_pLFSensor)
 	{
 		m_pLFSensor->Release();
