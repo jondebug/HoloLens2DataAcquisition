@@ -14,8 +14,6 @@ __declspec(align(16))
 struct HeTHaTEyeFrame
 {
 	DirectX::XMMATRIX headTransform;
-	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> leftHandTransform;
-	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> rightHandTransform;
 	DirectX::XMVECTOR eyeGazeOrigin;
 	DirectX::XMVECTOR eyeGazeDirection;
 	float eyeGazeDistance;
@@ -23,6 +21,8 @@ struct HeTHaTEyeFrame
 	bool rightHandPresent;
 	bool eyeGazePresent;
 	long long timestamp;
+	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> leftHandTransform;
+	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> rightHandTransform;
 };
 
 class EyeGazeStreamer
