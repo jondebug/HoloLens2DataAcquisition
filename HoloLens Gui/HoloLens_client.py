@@ -211,17 +211,21 @@ class LongThrowReceiverThread(FrameReceiverThread):
         self.prev_timestamp = 0
 
     def listen(self):
+        frame_counter = 0
         while True:
             if self.find_extrinsics:
                 if not np.any(self.lut):
                     self.extrinsics_header, lut_data = self.get_extrinsics_from_socket(320, 288)
                     self.lut = np.frombuffer(lut_data, dtype=np.float32).reshape((320 * 288, 3))
+                    print("got long throw LUT")
             else:
+                frame_counter +=1
+                if frame_counter%20==0:
+                    print(f"got {frame_counter} long throw frames")
                 self.latest_header, image_data = self.get_data_from_socket()
 
                 self.latest_frame = np.frombuffer(image_data, dtype=np.uint16).reshape(
                     (self.latest_header.ImageHeight, self.latest_header.ImageWidth))
-
                 self.lt_flag = True
                 assert (self.prev_timestamp != self.latest_header.Timestamp)
                 self.prev_timestamp = self.latest_header.Timestamp
@@ -341,14 +345,14 @@ def time_convert(sec):
 
 #############################################
 
-def main_function(path,HOST):
+def main_function(path, HOST):
     output_path = Path(path)
 
     video_receiver = VideoReceiverThread(HOST)
     video_receiver.start_socket()
-
-    ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
-    ahat_extr_receiver.start_socket()
+    ahat_extr_receiver = None
+    # ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
+    # ahat_extr_receiver.start_socket()
     # long throw depth
     lt_extr_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
     lt_extr_receiver.start_socket()
@@ -362,7 +366,7 @@ def main_function(path,HOST):
     # rf_extr_receiver.start_socket()
 
     video_receiver.start_listen()
-    ahat_extr_receiver.start_listen()
+    # ahat_extr_receiver.start_listen()
     lt_extr_receiver.start_listen()
     # lf_extr_receiver.start_listen()
     # rf_extr_receiver.start_listen()
@@ -378,7 +382,7 @@ def main_function(path,HOST):
 
 
     with open(output_path / 'pv.txt', 'w') as f1, open(output_path / 'Depth AHaT_rig2world.txt', 'w') as f2,  \
-        open(output_path / 'Depth AHaT_lut.bin', 'w') as f4:
+        open(output_path / 'Depth AHaT_lut.bin', 'w') as f4, open(output_path /'Depth Long Throw lut.bin', 'w') as f5:
         w1 = csv.writer(f1)
         w2 = csv.writer(f2)
 
@@ -457,6 +461,7 @@ def main_function(path,HOST):
 
                 ahat_receiver.extrinsics_header = ahat_extr_receiver.extrinsics_header
                 #ahat_receiver.lut = ahat_extr_receiver.lut
+                print("saving ahat lut")
                 ahat_extr_receiver.lut.tofile(f4)
 
                 depth_hdr = ahat_receiver.extrinsics_header
@@ -519,7 +524,8 @@ def main_function(path,HOST):
                 lt_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_STREAM_HEADER_FORMAT, RM_FRAME_STREAM_HEADER)
 
                 lt_receiver.extrinsics_header = lt_extr_receiver.extrinsics_header
-                lt_extr_receiver.lut.tofile(f4)
+                print("saving ahat lut")
+                lt_extr_receiver.lut.tofile(f5)
 
                 depth_hdr = lt_receiver.extrinsics_header
                 rig2cam_transform = np.array([
@@ -533,8 +539,8 @@ def main_function(path,HOST):
                     depth_hdr.rig2camTransformM44]).reshape(4, 4)
 
 
-                with open(output_path / 'Depth Long Throw_extrinsics.txt', 'w') as f3:
-                    w3 = csv.writer(f3)
+                with open(output_path / 'Depth Long Throw_extrinsics.txt', 'w') as f6:
+                    w3 = csv.writer(f6)
                     w3.writerow([rig2cam_transform[0, 0], rig2cam_transform[0, 1],
                                   rig2cam_transform[0, 2], rig2cam_transform[0, 3],
                                   rig2cam_transform[1, 0], rig2cam_transform[1, 1], rig2cam_transform[1, 2],

@@ -25,6 +25,7 @@ Second_font = ("Comic Sans MS", 10, "bold")
 last_font = ("Comic Sans MS", 14, "bold")
 path_pv = ''
 path_AHAT = ''
+path_LT = ''
 updated_path = ''
 path = ''
 fullList = []
@@ -209,7 +210,7 @@ def buildingPath(FullList):
     global updated_path
     global path_pv
     global path_AHAT
-    namesList = ["pv", "Depth AHat"]
+    namesList = ["pv", "Depth AHat", "Depth Long Throw"]
     os.chdir(FullList[0])
     os.makedirs(FullList[1],exist_ok=True)
     new_Folder = ""
@@ -230,7 +231,7 @@ def buildingPath(FullList):
 
     path_pv = updated_path + "\\" + namesList[0]
     path_AHAT = updated_path + "\\" + namesList[1]
-
+    path_LT = updated_path + "\\" + namesList[2]
 photo = PhotoImage(file="fresh.png")
 show = Label(root, image=photo)
 show.place(x=80, y=20)
