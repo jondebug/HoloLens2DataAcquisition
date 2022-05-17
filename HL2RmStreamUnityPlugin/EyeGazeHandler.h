@@ -68,7 +68,7 @@ private:
 		winrt::Windows::Networking::Sockets::StreamSocketListener /* sender */,
 		winrt::Windows::Networking::Sockets::StreamSocketListenerConnectionReceivedEventArgs args);
 
-	void DumpEyesToFile();
+	winrt::Windows::Foundation::IAsyncAction DumpEyesToFile();
 	void SendFrame(HeTHaTEyeFrame pFrame,	long long pTimestamp);
 	static void GetAndSendThread(EyeGazeStreamer* pProcessor);
 

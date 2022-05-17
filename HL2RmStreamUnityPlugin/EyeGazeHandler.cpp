@@ -273,7 +273,7 @@ std::wstring SetDateTimePath()
 	return datetime;
 }
 
-void EyeGazeStreamer::DumpEyesToFile() {
+IAsyncAction EyeGazeStreamer::DumpEyesToFile() {
 
 	StorageFolder localFolder = ApplicationData::Current().LocalFolder();
 	auto archiveSourceFolder = co_await localFolder.CreateFolderAsync(
