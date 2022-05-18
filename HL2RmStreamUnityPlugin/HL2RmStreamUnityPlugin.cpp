@@ -153,21 +153,22 @@ void HL2Stream::InitializeResearchModeProcessing()
 	// the spatial locators for camera readers objects
 	GUID guid;
 	GetRigNodeId(guid);
+	// Ahat Streamer:
+	//auto ahatStreamer = std::make_shared<Streamer>(L"23941", guid, m_worldOrigin);
+	//m_pAHATStreamer = ahatStreamer;
 
-	auto ahatStreamer = std::make_shared<Streamer>(L"23941", guid, m_worldOrigin);
-	m_pAHATStreamer = ahatStreamer;
 
-	// Long throw streamer
+	//if (m_pAHATSensor)
+	//{
+	//	auto processor = std::make_shared<ResearchModeFrameProcessor>(
+	//		m_pAHATSensor, camConsentGiven, &camAccessCheck, 0, m_pAHATStreamer);
+
+	//	m_pAHATProcessor = processor;
+	//}
+	
+	// Long throw streamer:
 	auto LTStreamer = std::make_shared<Streamer>(L"23945", guid, m_worldOrigin);
 	m_pLONGTHROWStreamer = LTStreamer;
-
-	if (m_pAHATSensor)
-	{
-		auto processor = std::make_shared<ResearchModeFrameProcessor>(
-			m_pAHATSensor, camConsentGiven, &camAccessCheck, 0, m_pAHATStreamer);
-
-		m_pAHATProcessor = processor;
-	}
 
 	if (m_pLONGTHROWSensor)
 	{
