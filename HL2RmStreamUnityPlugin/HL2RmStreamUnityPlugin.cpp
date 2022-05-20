@@ -40,7 +40,8 @@ void __stdcall HL2Stream::StartStreaming()
 void HL2Stream::StreamingToggle()
 {
 	m_videoFrameProcessor->StreamingToggle();
-	m_pAHATStreamer->StreamingToggle();
+//	m_pAHATStreamer->StreamingToggle();
+	m_pLONGTHROWStreamer->StreamingToggle();
 	m_pLFStreamer->StreamingToggle();
 	m_pRFStreamer->StreamingToggle();
 }
@@ -107,14 +108,14 @@ void HL2Stream::InitializeResearchModeSensors()
 	{
 		wchar_t msgBuffer[200];
 
-		if (sensorDescriptor.sensorType == DEPTH_AHAT)
-		{
-			winrt::check_hresult(m_pSensorDevice->GetSensor(
-				sensorDescriptor.sensorType, &m_pAHATSensor));
-			swprintf_s(msgBuffer, L"Image2Face::InitializeSensors: Sensor %ls\n",
-				m_pAHATSensor->GetFriendlyName());
-			OutputDebugStringW(msgBuffer);
-		}
+		//if (sensorDescriptor.sensorType == DEPTH_AHAT)
+		//{
+		//	winrt::check_hresult(m_pSensorDevice->GetSensor(
+		//		sensorDescriptor.sensorType, &m_pAHATSensor));
+		//	swprintf_s(msgBuffer, L"Image2Face::InitializeSensors: Sensor %ls\n",
+		//		m_pAHATSensor->GetFriendlyName());
+		//	OutputDebugStringW(msgBuffer);
+		//}
 
 		if (sensorDescriptor.sensorType == DEPTH_LONG_THROW)
 		{
@@ -167,7 +168,7 @@ void HL2Stream::InitializeResearchModeProcessing()
 	//}
 	
 	// Long throw streamer:
-	auto LTStreamer = std::make_shared<Streamer>(L"23945", guid, m_worldOrigin);
+	auto LTStreamer = std::make_shared<Streamer>(L"23941", guid, m_worldOrigin);
 	m_pLONGTHROWStreamer = LTStreamer;
 
 	if (m_pLONGTHROWSensor)

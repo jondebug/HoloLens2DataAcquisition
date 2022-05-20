@@ -431,13 +431,18 @@ void Streamer::Send(
     {
         const BYTE* pSigma = nullptr;
         size_t outSigmaBufferCount = 0;
+        const UINT16* pAbImage = nullptr;
+        size_t outAbBufferCount = 0;
+
+
+        assert(outAbBufferCount == outSigmaBufferCount);
 
         IResearchModeSensorDepthFrame* pLongDepthFrame = nullptr;
 
         const UINT16* pLongDepth = nullptr;
         HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pLongDepthFrame));
 
-        if (!pLongDepth)
+        if (!pLongDepthFrame)
         {
 #if DBG_ENABLE_VERBOSE_LOGGING
             OutputDebugStringW(L"Streamer::SendFrame: Failed to grab depth frame.\n");
@@ -445,14 +450,15 @@ void Streamer::Send(
             return;
         }
         hr = pLongDepthFrame->GetSigmaBuffer(&pSigma, &outSigmaBufferCount);
+        hr = pLongDepthFrame->GetAbDepthBuffer(&pAbImage, &outAbBufferCount);
         hr = pLongDepthFrame->GetBuffer(&pLongDepth, &outBufferCount);
         sensorByteData.reserve(outBufferCount * sizeof(UINT16));
 
         // validate depth & append to vector
-        for (size_t i = 0; i < outBufferCount; ++i)
+        for (size_t i = 0; i < outAbBufferCount; ++i)
         {
             // use a different invalidation condition for Long Throw and AHAT 
-            const bool invalid = pSigma[i] & Depth::InvalidationMasks::Invalid > 0;
+            const bool invalid = (pSigma[i] & Depth::InvalidationMasks::Invalid) > 0;
             UINT16 d;
             if (invalid)
             {
@@ -462,8 +468,11 @@ void Streamer::Send(
             {
                 d = pLongDepth[i];
             }
-            sensorByteData.push_back((BYTE)d);
             sensorByteData.push_back((BYTE)(d >> 8));
+            sensorByteData.push_back((BYTE)d);
+
+            //depthPgmData.push_back((BYTE)(d >> 8));
+            //depthPgmData.push_back((BYTE)d);
         }
 
         if (pLongDepthFrame)

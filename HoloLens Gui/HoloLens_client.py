@@ -52,9 +52,9 @@ RM_FRAME_STREAM_HEADER = namedtuple(
 # Each port corresponds to a single stream type
 VIDEO_STREAM_PORT = 23940
 AHAT_STREAM_PORT = 23941
-LONG_THROW_STREAM_PORT = 23945
 LEFT_FRONT_STREAM_PORT = 23942
 RIGHT_FRONT_STREAM_PORT = 23943
+LONG_THROW_STREAM_PORT = 23941
 
 HOST = '132.69.210.105'  #169.254.233.208'   # '169.254.189.82' #'192.168.1.242'
 # '192.168.1.92'
@@ -351,24 +351,24 @@ def main_function(path, HOST):
     video_receiver = VideoReceiverThread(HOST)
     video_receiver.start_socket()
     ahat_extr_receiver = None
-    # ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
-    # ahat_extr_receiver.start_socket()
+    #ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
+    #ahat_extr_receiver.start_socket()
     # long throw depth
+    lt_extr_receiver = None
     lt_extr_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
     lt_extr_receiver.start_socket()
 
-   # lf_extr_receiver = SpatialCamsReceiverThread(HOST, LEFT_FRONT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT,
-    #                                            RM_EXTRINSICS_HEADER, True)
-    # lf_extr_receiver.start_socket()
+    #lf_extr_receiver = SpatialCamsReceiverThread(HOST, LEFT_FRONT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER, True)
+    #lf_extr_receiver.start_socket()
 
    # rf_extr_receiver = SpatialCamsReceiverThread(HOST, RIGHT_FRONT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT,
     #                                             RM_EXTRINSICS_HEADER, True)
     # rf_extr_receiver.start_socket()
 
     video_receiver.start_listen()
-    # ahat_extr_receiver.start_listen()
+    #ahat_extr_receiver.start_listen()
     lt_extr_receiver.start_listen()
-    # lf_extr_receiver.start_listen()
+    #lf_extr_receiver.start_listen()
     # rf_extr_receiver.start_listen()
     first_line_flag = True
     ahat_receiver = None
@@ -379,13 +379,15 @@ def main_function(path, HOST):
     start_recording = False
     prev_timestamp_pv = 0
     prev_timestamp_ahat = 0
+    prev_timestamp_lt = 0
 
 
     with open(output_path / 'pv.txt', 'w') as f1, open(output_path / 'Depth AHaT_rig2world.txt', 'w') as f2,  \
-        open(output_path / 'Depth AHaT_lut.bin', 'w') as f4, open(output_path /'Depth Long Throw lut.bin', 'w') as f5:
+        open(output_path / 'Depth AHaT_lut.bin', 'w') as f4, open(output_path /'Depth Long Throw_lut.bin', 'w') as f5, \
+        open(output_path / 'Depth Long Throw_rig2world.txt', 'w') as f7:
         w1 = csv.writer(f1)
         w2 = csv.writer(f2)
-
+        w4 = csv.writer(f7)
         while True:
             if np.any(video_receiver.latest_frame):
                 #save_count_pv += 1
@@ -498,7 +500,7 @@ def main_function(path, HOST):
                 header = lt_receiver.latest_header
                 curr_lt_timestamp = header.Timestamp
                 cv2.imwrite(str(output_path) +r"\Depth Long Throw\\" +str(curr_lt_timestamp) + ".pgm", (lt_receiver.latest_frame).astype(np.uint16))
-                prev_timestamp_ahat = curr_ahat_timestamp
+                prev_timestamp_lt = curr_lt_timestamp
                 lt_receiver.lt_flag = False
 
                # depth_img = ahat_receiver.latest_frame
@@ -514,7 +516,7 @@ def main_function(path, HOST):
                     depth_hdr.rig2worldTransformM44]).reshape(4, 4)
 
                 rig2world_transform = np.transpose(rig2world_transform)
-                w2.writerow([curr_ahat_timestamp, rig2world_transform[0,0],rig2world_transform[0,1],rig2world_transform[0,2],rig2world_transform[0,3],
+                w4.writerow([curr_lt_timestamp, rig2world_transform[0,0],rig2world_transform[0,1],rig2world_transform[0,2],rig2world_transform[0,3],
                                                  rig2world_transform[1, 0],rig2world_transform[1,1],rig2world_transform[1,2],rig2world_transform[1,3],
                                                  rig2world_transform[2, 0],rig2world_transform[2,1],rig2world_transform[2,2],rig2world_transform[2,3],
                                                  rig2world_transform[3,0],rig2world_transform[3,1],rig2world_transform[3,2],rig2world_transform[3,3]])
@@ -524,7 +526,7 @@ def main_function(path, HOST):
                 lt_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_STREAM_HEADER_FORMAT, RM_FRAME_STREAM_HEADER)
 
                 lt_receiver.extrinsics_header = lt_extr_receiver.extrinsics_header
-                print("saving ahat lut")
+                print("saving lt lut")
                 lt_extr_receiver.lut.tofile(f5)
 
                 depth_hdr = lt_receiver.extrinsics_header
@@ -555,8 +557,9 @@ def main_function(path, HOST):
                 lt_receiver.start_socket()
                 lt_receiver.start_listen()
 
-        # if lf_receiver and np.any(lf_receiver.latest_frame):
-        #     #cv2.imshow('Left Front Camera Stream', lf_receiver.latest_frame)
+            # if lf_receiver and np.any(lf_receiver.latest_frame):
+            #     print("arrived")
+            #     cv2.imshow('Left Front Camera Stream', lf_receiver.latest_frame)
         #
         #     if start_recording:
         #         color = cv2.cvtColor(lf_receiver.latest_frame, cv2.COLOR_GRAY2BGR)

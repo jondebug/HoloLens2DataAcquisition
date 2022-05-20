@@ -81,7 +81,7 @@ who_built.place(x=55, y=260)
 hololens_ip = Label(root,text = "insert HoloLens ip:", font = last_font)
 hololens_ip.place(x=55,y=470)
 ip = tk.Entry(root)
-ip.insert(-1,"132.69.210.105")
+ip.insert(-1,"132.69.210.137")
 ip.place(x=280,y=480)
 
 
