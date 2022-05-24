@@ -350,8 +350,8 @@ def main_function(path, HOST):
     video_receiver = VideoReceiverThread(HOST)
     video_receiver.start_socket()
     ahat_extr_receiver = None
-    #ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
-    #ahat_extr_receiver.start_socket()
+    ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
+    ahat_extr_receiver.start_socket()
 
     #lf_extr_receiver = SpatialCamsReceiverThread(HOST, LEFT_FRONT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER, True)
     #lf_extr_receiver.start_socket()
@@ -361,7 +361,7 @@ def main_function(path, HOST):
     # rf_extr_receiver.start_socket()
 
     video_receiver.start_listen()
-    #ahat_extr_receiver.start_listen()
+    ahat_extr_receiver.start_listen()
     #lt_extr_receiver.start_listen()
     #lf_extr_receiver.start_listen()
     # rf_extr_receiver.start_listen()
