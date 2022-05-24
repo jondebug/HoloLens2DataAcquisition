@@ -154,25 +154,25 @@ bool Streamer::SendExtrinsics(
         }
     }
 
-    if (pSensorType == DEPTH_LONG_THROW)
-    {
-  
-        IResearchModeSensorDepthFrame* pLongDepthFrame = nullptr;
-        HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pLongDepthFrame));
-
-        if (!pLongDepthFrame)
-        {
-#if DBG_ENABLE_VERBOSE_LOGGING
-            OutputDebugStringW(L"Streamer::SendFrame: Failed to grab long throw depth frame.\n");
-#endif
-            return b_successful_write;
-        }
-
-        if (pLongDepthFrame)
-        {
-            pLongDepthFrame->Release();
-        }
-    }
+//    if (pSensorType == DEPTH_LONG_THROW)
+//    {
+//  
+//        IResearchModeSensorDepthFrame* pLongDepthFrame = nullptr;
+//        HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pLongDepthFrame));
+//
+//        if (!pLongDepthFrame)
+//        {
+//#if DBG_ENABLE_VERBOSE_LOGGING
+//            OutputDebugStringW(L"Streamer::SendFrame: Failed to grab long throw depth frame.\n");
+//#endif
+//            return b_successful_write;
+//        }
+//
+//        if (pLongDepthFrame)
+//        {
+//            pLongDepthFrame->Release();
+//        }
+//    }
 
     if (pSensorType == LEFT_FRONT)
     {
@@ -426,59 +426,59 @@ void Streamer::Send(
             pDepthFrame->Release();
         }
     }
-    // depth long throw
-    if (pSensorType == DEPTH_LONG_THROW)
-    {
-        const BYTE* pSigma = nullptr;
-        size_t outSigmaBufferCount = 0;
-        const UINT16* pAbImage = nullptr;
-        size_t outAbBufferCount = 0;
-
-
-        assert(outAbBufferCount == outSigmaBufferCount);
-
-        IResearchModeSensorDepthFrame* pLongDepthFrame = nullptr;
-
-        const UINT16* pLongDepth = nullptr;
-        HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pLongDepthFrame));
-
-        if (!pLongDepthFrame)
-        {
-#if DBG_ENABLE_VERBOSE_LOGGING
-            OutputDebugStringW(L"Streamer::SendFrame: Failed to grab depth frame.\n");
-#endif
-            return;
-        }
-        hr = pLongDepthFrame->GetSigmaBuffer(&pSigma, &outSigmaBufferCount);
-        hr = pLongDepthFrame->GetAbDepthBuffer(&pAbImage, &outAbBufferCount);
-        hr = pLongDepthFrame->GetBuffer(&pLongDepth, &outBufferCount);
-        sensorByteData.reserve(outBufferCount * sizeof(UINT16));
-
-        // validate depth & append to vector
-        for (size_t i = 0; i < outAbBufferCount; ++i)
-        {
-            // use a different invalidation condition for Long Throw and AHAT 
-            const bool invalid = (pSigma[i] & Depth::InvalidationMasks::Invalid) > 0;
-            UINT16 d;
-            if (invalid)
-            {
-                d = 0;
-            }
-            else
-            {
-                d = pLongDepth[i];
-            }
-         
-
-            sensorByteData.push_back((BYTE)d);
-            sensorByteData.push_back((BYTE)(d >> 8));
-        }
-
-        if (pLongDepthFrame)
-        {
-            pLongDepthFrame->Release();
-        }
-    }
+//    // depth long throw
+//    if (pSensorType == DEPTH_LONG_THROW)
+//    {
+//        const BYTE* pSigma = nullptr;
+//        size_t outSigmaBufferCount = 0;
+//        const UINT16* pAbImage = nullptr;
+//        size_t outAbBufferCount = 0;
+//
+//
+//        assert(outAbBufferCount == outSigmaBufferCount);
+//
+//        IResearchModeSensorDepthFrame* pLongDepthFrame = nullptr;
+//
+//        const UINT16* pLongDepth = nullptr;
+//        HRESULT hr = frame->QueryInterface(IID_PPV_ARGS(&pLongDepthFrame));
+//
+//        if (!pLongDepthFrame)
+//        {
+//#if DBG_ENABLE_VERBOSE_LOGGING
+//            OutputDebugStringW(L"Streamer::SendFrame: Failed to grab depth frame.\n");
+//#endif
+//            return;
+//        }
+//        hr = pLongDepthFrame->GetSigmaBuffer(&pSigma, &outSigmaBufferCount);
+//        hr = pLongDepthFrame->GetAbDepthBuffer(&pAbImage, &outAbBufferCount);
+//        hr = pLongDepthFrame->GetBuffer(&pLongDepth, &outBufferCount);
+//        sensorByteData.reserve(outBufferCount * sizeof(UINT16));
+//
+//        // validate depth & append to vector
+//        for (size_t i = 0; i < outAbBufferCount; ++i)
+//        {
+//            // use a different invalidation condition for Long Throw and AHAT 
+//            const bool invalid = (pSigma[i] & Depth::InvalidationMasks::Invalid) > 0;
+//            UINT16 d;
+//            if (invalid)
+//            {
+//                d = 0;
+//            }
+//            else
+//            {
+//                d = pLongDepth[i];
+//            }
+//         
+//
+//            sensorByteData.push_back((BYTE)d);
+//            sensorByteData.push_back((BYTE)(d >> 8));
+//        }
+//
+//        if (pLongDepthFrame)
+//        {
+//            pLongDepthFrame->Release();
+//        }
+//    }
 
 
     if (pSensorType == LEFT_FRONT)
