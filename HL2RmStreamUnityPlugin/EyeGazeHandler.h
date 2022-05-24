@@ -48,7 +48,7 @@ public:
 		const std::wstring& datetime_path, const std::wstring& suffix) const;
 
 
-	winrt::Windows::Foundation::IAsyncAction InitializeAsync(
+	void/*winrt::Windows::Foundation::IAsyncAction*/ InitializeAsync(
 		const long long minDelta,
 		const winrt::Windows::Perception::Spatial::SpatialCoordinateSystem& coordSystem,
 		std::wstring portName);
@@ -62,7 +62,7 @@ protected:
 
 private:
 	HeTHaTEyeFrame ReturnEyeGazeFrame();
-	winrt::Windows::Foundation::IAsyncAction StartEyeStreamServer();
+	/*winrt::Windows::Foundation::IAsyncAction*/void StartEyeStreamServer();
 
 	void OnConnectionReceived(
 		winrt::Windows::Networking::Sockets::StreamSocketListener /* sender */,

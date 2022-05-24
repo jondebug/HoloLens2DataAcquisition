@@ -205,7 +205,7 @@ void EyeGazeStreamer::OnConnectionReceived(
 	}
 }
 
-IAsyncAction EyeGazeStreamer::StartEyeStreamServer()
+void EyeGazeStreamer::StartEyeStreamServer()
 {
 	try
 	{
@@ -215,7 +215,7 @@ IAsyncAction EyeGazeStreamer::StartEyeStreamServer()
 		// Start listening for incoming TCP connections on the specified port. You can specify any port that's not currently in use.
 		// Every protocol typically has a standard port number. For example, HTTP is typically 80, FTP is 20 and 21, etc.
 		// For this example, we'll choose an arbitrary port number.
-		co_await m_streamSocketListener.BindServiceNameAsync(m_portName);
+		m_streamSocketListener.BindServiceNameAsync(m_portName);
 		//m_streamSocketListener.Control().KeepAlive(true);
 
 		wchar_t msgBuffer[200];
@@ -226,17 +226,17 @@ IAsyncAction EyeGazeStreamer::StartEyeStreamServer()
 	catch (winrt::hresult_error const& ex)
 	{
  
-		SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
+		/*SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
 		winrt::hstring message = webErrorStatus != SocketErrorStatus::Unknown ?
 			winrt::to_hstring((int32_t)webErrorStatus) : winrt::to_hstring(ex.to_abi());
 		OutputDebugStringW(L"VideoCameraStreamer::StartServer: Failed to open listener with ");
 		OutputDebugStringW(message.c_str());
-		OutputDebugStringW(L"\n");
+		OutputDebugStringW(L"\n");*/
 
 	}
 }
 
-IAsyncAction EyeGazeStreamer::InitializeAsync(
+/*IAsyncAction*/void EyeGazeStreamer::InitializeAsync(
 	const long long minDelta,
 	const SpatialCoordinateSystem& coordSystem,
 	std::wstring portName)

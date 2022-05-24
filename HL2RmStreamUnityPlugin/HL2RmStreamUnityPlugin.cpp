@@ -62,7 +62,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 	co_await m_videoFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23940");
 }
 
-winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeEyeStreamerAsync()
+void HL2Stream::InitializeEyeStreamerAsync()
 {
 /*	if (m_videoFrameProcessorOperation &&
 		m_videoFrameProcessorOperation.Status() == winrt::Windows::Foundation::AsyncStatus::Completed)
@@ -76,7 +76,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeEyeStreamerAsync()
 		throw winrt::hresult(E_POINTER);
 	}
 
-	co_await m_EyeFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23945");
+	m_EyeFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23945");
 }
 
 void HL2Stream::InitializeResearchModeSensors()

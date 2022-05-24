@@ -17,7 +17,7 @@ namespace HL2Stream
 	winrt::Windows::Foundation::IAsyncAction
 		InitializeVideoFrameProcessorAsync();
 
-	winrt::Windows::Foundation::IAsyncAction 
+	void /*winrt::Windows::Foundation::IAsyncAction*/ 
 		InitializeEyeStreamerAsync();
 
 	void DisableSensors();
