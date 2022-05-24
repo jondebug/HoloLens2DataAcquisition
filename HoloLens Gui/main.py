@@ -210,7 +210,7 @@ def buildingPath(FullList):
     global updated_path
     global path_pv
     global path_AHAT
-    namesList = ["pv", "Depth AHat", "Depth Long Throw"]
+    namesList = ["pv", "Depth AHat"]
     os.chdir(FullList[0])
     os.makedirs(FullList[1],exist_ok=True)
     new_Folder = ""
