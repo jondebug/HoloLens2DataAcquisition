@@ -19,7 +19,7 @@ np.warnings.filterwarnings('ignore')
 # Definitions
 # Protocol Header Format
 # see https://docs.python.org/2/library/struct.html#format-characters
-EYE_STREAM_HEADER_FORMAT = "@49f???qf"  # TODO: remove f at the end when we know how lni dont know hot
+EYE_STREAM_HEADER_FORMAT = "@49f???q208f"  # TODO: remove f at the end when we know how lni dont know hot
 EYE_FRAME_STREAM = namedtuple(
     'EYEStreamPacket',
     'HeadTransformM11 HeadTransformM12 HeadTransformM13 HeadTransformM14 '
@@ -34,9 +34,7 @@ EYE_FRAME_STREAM = namedtuple(
     'eyeGazeDirectionM21 eyeGazeDirectionM22 eyeGazeDirectionM23 eyeGazeDirectionM24 '
     'eyeGazeDirectionM31 eyeGazeDirectionM32 eyeGazeDirectionM33 eyeGazeDirectionM34 '
     'eyeGazeDirectionM41 eyeGazeDirectionM42 eyeGazeDirectionM43 eyeGazeDirectionM44 '
-    'eyeGazeDistance leftHandPresent rightHandPresent eyeGazePresent placeKeeper'
-
-)
+    'eyeGazeDistance leftHandPresent rightHandPresent eyeGazePresent timestamp placekeeper')
 
 VIDEO_STREAM_HEADER_FORMAT = "@qIIII20f"
 
