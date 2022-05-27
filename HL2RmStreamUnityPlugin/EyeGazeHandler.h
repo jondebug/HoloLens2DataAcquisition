@@ -9,6 +9,8 @@
 #include <iostream>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Web.Syndication.h>
+#include "Cannon/TrackedHands.h"
+
 #include "EyeGazeHandler.h"
 __declspec(align(16))
 struct HeTHaTEyeFrame
@@ -61,6 +63,8 @@ protected:
 	//	const winrt::Windows::Media::Capture::Frames::MediaFrameArrivedEventArgs& args);
 
 private:
+	TrackedHands m_hands;
+
 	HeTHaTEyeFrame ReturnEyeGazeFrame();
 	/*winrt::Windows::Foundation::IAsyncAction*/void StartEyeStreamServer();
 

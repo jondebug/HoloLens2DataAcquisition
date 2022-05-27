@@ -226,12 +226,12 @@ void EyeGazeStreamer::StartEyeStreamServer()
 	catch (winrt::hresult_error const& ex)
 	{
  
-		/*SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
+		SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
 		winrt::hstring message = webErrorStatus != SocketErrorStatus::Unknown ?
 			winrt::to_hstring((int32_t)webErrorStatus) : winrt::to_hstring(ex.to_abi());
 		OutputDebugStringW(L"VideoCameraStreamer::StartServer: Failed to open listener with ");
 		OutputDebugStringW(message.c_str());
-		OutputDebugStringW(L"\n");*/
+		OutputDebugStringW(L"\n");
 
 	}
 }
@@ -430,15 +430,26 @@ void EyeGazeStreamer::GetAndSendThread(EyeGazeStreamer* pProcessor) {
 
 */
  HeTHaTEyeFrame EyeGazeStreamer::ReturnEyeGazeFrame() {
-
-	 HeTHaTEyeFrame frame;
+	 
+	 //float frameDelta = m_frameDeltaTimer.GetTime();
+	 //m_frameDeltaTimer.Reset();
 
 	 m_mixedReality.Update();
-	 const XMVECTOR headPosition = m_mixedReality.GetHeadPosition();
-	 const XMVECTOR headForward = m_mixedReality.GetHeadForwardDirection();
-	 const XMVECTOR headUp = m_mixedReality.GetHeadUpDirection();
+	 m_hands.UpdateFromMixedReality(m_mixedReality);
+
+	 HeTHaTEyeFrame frame;
+	 // Get head transform
+	 frame.headTransform = m_hands.GetHeadTransform();
+	 // Get hand joints transforms
+	 for (int j = 0; j < (int)HandJointIndex::Count; ++j)
+	 {
+		 frame.leftHandTransform[j] = m_hands.GetOrientedJoint(0, HandJointIndex(j));
+	 }
+
+	 // Get timestamp
 	 frame.timestamp = m_mixedReality.GetPredictedDisplayTime();
 
+	 // Get eye gaze tracking data
 	 if (m_mixedReality.IsEyeTrackingEnabled() && m_mixedReality.IsEyeTrackingActive())
 	 {
 		 frame.eyeGazePresent = true;
