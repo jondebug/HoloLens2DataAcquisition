@@ -13,28 +13,13 @@ import time
 import os
 from tkinter import *
 from tkinter import messagebox
-
+from eye_stream_header import EYE_FRAME_STREAM, EYE_STREAM_HEADER_FORMAT
 np.warnings.filterwarnings('ignore')
 
 # Definitions
 # Protocol Header Format
 # see https://docs.python.org/2/library/struct.html#format-characters
-EYE_STREAM_HEADER_FORMAT = "@49f???q208f"  # TODO: remove f at the end when we know how lni dont know hot
-EYE_FRAME_STREAM = namedtuple(
-    'EYEStreamPacket',
-    'HeadTransformM11 HeadTransformM12 HeadTransformM13 HeadTransformM14 '
-    'HeadTransformM21 HeadTransformM22 HeadTransformM23 HeadTransformM24 '
-    'HeadTransformM31 HeadTransformM32 HeadTransformM33 HeadTransformM34 '
-    'HeadTransformM41 HeadTransformM42 HeadTransformM43 HeadTransformM44 '
-    'eyeGazeOriginM11 eyeGazeOriginM12 eyeGazeOriginM13 eyeGazeOriginM14 '
-    'eyeGazeOriginM21 eyeGazeOriginM22 eyeGazeOriginM23 eyeGazeOriginM24 '
-    'eyeGazeOriginM31 eyeGazeOriginM32 eyeGazeOriginM33 eyeGazeOriginM34 '
-    'eyeGazeOriginM41 eyeGazeOriginM42 eyeGazeOriginM43 eyeGazeOriginM44 '
-    'eyeGazeDirectionM11 eyeGazeDirectionM12 eyeGazeDirectionM13 eyeGazeDirectionM14 '
-    'eyeGazeDirectionM21 eyeGazeDirectionM22 eyeGazeDirectionM23 eyeGazeDirectionM24 '
-    'eyeGazeDirectionM31 eyeGazeDirectionM32 eyeGazeDirectionM33 eyeGazeDirectionM34 '
-    'eyeGazeDirectionM41 eyeGazeDirectionM42 eyeGazeDirectionM43 eyeGazeDirectionM44 '
-    'eyeGazeDistance leftHandPresent rightHandPresent eyeGazePresent timestamp placekeeper')
+
 
 VIDEO_STREAM_HEADER_FORMAT = "@qIIII20f"
 

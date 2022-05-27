@@ -23,7 +23,7 @@ struct HeTHaTEyeFrame
 	bool rightHandPresent;
 	bool eyeGazePresent;
 	long long timestamp;
-	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> leftHandTransform;
+	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> leftHandTransform; //array of length count = 26 and data type XMMATRIX. XMMATRIX is a 4x4 matrix of floats
 	std::array<DirectX::XMMATRIX, (size_t)HandJointIndex::Count> rightHandTransform;
 };
 
