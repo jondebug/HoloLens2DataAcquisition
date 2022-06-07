@@ -27,7 +27,13 @@ IAsyncAction VideoCameraStreamer::InitializeAsync(
     m_worldCoordSystem = coordSystem;
     m_portName = portName;
     m_minDelta = minDelta;
-
+    //################ remove this ##################
+    //m_mixedReality.EnableMixedReality();
+    //m_mixedReality.EnableEyeTracking();
+    //m_mixedReality.Update();
+    //TrackedHands m_hands;
+    //m_hands.UpdateFromMixedReality(m_mixedReality);
+    //################################################
     m_streamingEnabled = true;
 
     winrt::Windows::Foundation::Collections::IVectorView<MediaFrameSourceGroup>
@@ -136,7 +142,7 @@ void VideoCameraStreamer::OnFrameArrived(
         std::lock_guard<std::shared_mutex> lock(m_frameMutex);
         m_latestFrame = frame;
 #if DBG_ENABLE_VERBOSE_LOGGING
-        OutputDebugStringW(L"VideoCameraStreamer::CameraUpdateThread: Updated frame.\n");
+        //OutputDebugStringW(L"VideoCameraStreamer::CameraUpdateThread: Updated frame.\n");
 #endif
     }
 }

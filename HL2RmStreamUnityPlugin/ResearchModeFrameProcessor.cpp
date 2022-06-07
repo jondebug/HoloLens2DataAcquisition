@@ -128,7 +128,7 @@ void ResearchModeFrameProcessor::CameraUpdateThread(
                 }
                 pResearchModeFrameProcessor->m_pSensorFrame = pSensorFrame;
 #if DBG_ENABLE_VERBOSE_LOGGING
-                OutputDebugStringW(L"ResearchModeFrameProcessor::CameraUpdateThread: Updated frame.\n");
+                //OutputDebugStringW(L"ResearchModeFrameProcessor::CameraUpdateThread: Updated frame.\n");
 #endif
             }
             else

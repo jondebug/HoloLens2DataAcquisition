@@ -1,6 +1,7 @@
 #pragma once
 #include <mutex>
 #include <shared_mutex>
+#include "Cannon/MixedReality.h"
 
 class VideoCameraStreamer
 {
@@ -21,6 +22,7 @@ public:
         std::wstring portName);
 
     void StreamingToggle();
+    MixedReality m_mixedReality;
 
 protected:
     void OnFrameArrived(const winrt::Windows::Media::Capture::Frames::MediaFrameReader& sender,

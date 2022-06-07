@@ -205,7 +205,7 @@ void EyeGazeStreamer::OnConnectionReceived(
 	}
 }
 
-void EyeGazeStreamer::StartEyeStreamServer()
+IAsyncAction EyeGazeStreamer::StartEyeStreamServer()
 {
 	try
 	{
@@ -215,7 +215,7 @@ void EyeGazeStreamer::StartEyeStreamServer()
 		// Start listening for incoming TCP connections on the specified port. You can specify any port that's not currently in use.
 		// Every protocol typically has a standard port number. For example, HTTP is typically 80, FTP is 20 and 21, etc.
 		// For this example, we'll choose an arbitrary port number.
-		m_streamSocketListener.BindServiceNameAsync(m_portName);
+		co_await m_streamSocketListener.BindServiceNameAsync(m_portName);
 		//m_streamSocketListener.Control().KeepAlive(true);
 
 		wchar_t msgBuffer[200];
@@ -236,7 +236,7 @@ void EyeGazeStreamer::StartEyeStreamServer()
 	}
 }
 
-/*IAsyncAction*/void EyeGazeStreamer::InitializeAsync(
+IAsyncAction EyeGazeStreamer::InitializeAsync(
 	const long long minDelta,
 	const SpatialCoordinateSystem& coordSystem,
 	std::wstring portName)
@@ -247,7 +247,12 @@ void EyeGazeStreamer::StartEyeStreamServer()
 	m_minDelta = minDelta;
 
 	m_streamingEnabled = true;
-
+	//########### remove this ##############
+	m_mixedReality.EnableMixedReality();
+	OutputDebugStringW(L"finished enabling mixed reality");
+	m_mixedReality.EnableEyeTracking();
+	OutputDebugStringW(L"finished enable eye tracker");
+	//#####################################
 	StartEyeStreamServer();
 	m_pStreamThread = new std::thread(EyeGazeStreamer::GetAndSendThread, this);
 	//m_pStreamThread = new std::thread(EyeStreamThread, this);
@@ -290,6 +295,9 @@ IAsyncAction EyeGazeStreamer::DumpEyesToFile() {
 
 void EyeGazeStreamer::GetAndSendThread(EyeGazeStreamer* pProcessor) {
 	OutputDebugString(L"EyeStreamer::CameraStreamThread: Starting eye streaming thread.\n");
+
+	//pProcessor->m_mixedReality.EnableMixedReality();
+	//pProcessor->m_mixedReality.EnableEyeTracking();
 	while (!pProcessor->m_fExit)
 	{
 		//std::lock_guard<std::shared_mutex> reader_guard(m_frameMutex);

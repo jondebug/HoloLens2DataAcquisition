@@ -1,4 +1,4 @@
-
+from collections import namedtuple, deque
 
 EYE_STREAM_HEADER_FORMAT = "@49f???q832f"  # TODO: remove f at the end when we know how lni dont know hot
 

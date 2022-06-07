@@ -26,12 +26,13 @@ void __stdcall HL2Stream::StartStreaming()
 
 	SpatialLocator m_locator = SpatialLocator::GetDefault();
 	m_worldOrigin = m_locator.CreateStationaryFrameOfReferenceAtCurrentLocation().CoordinateSystem();
-
+	OutputDebugStringW(L" general start straming");
+	InitializeEyeStreamerAsync();
 	InitializeResearchModeSensors();
 	InitializeResearchModeProcessing();
 
 	InitializeVideoFrameProcessorAsync();
-	InitializeEyeStreamerAsync();
+	
 #if DBG_ENABLE_INFO_LOGGING
 	OutputDebugStringW(L"HL2Stream::StartStreaming: Done.\n");
 #endif
@@ -62,7 +63,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 	co_await m_videoFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23940");
 }
 
-void HL2Stream::InitializeEyeStreamerAsync()
+winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeEyeStreamerAsync()
 {
 /*	if (m_videoFrameProcessorOperation &&
 		m_videoFrameProcessorOperation.Status() == winrt::Windows::Foundation::AsyncStatus::Completed)
@@ -75,8 +76,8 @@ void HL2Stream::InitializeEyeStreamerAsync()
 	{
 		throw winrt::hresult(E_POINTER);
 	}
-
-	m_EyeFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23945");
+	OutputDebugStringW(L"calling  m_EyeFrameProcessor->InitializeAsync");
+	co_await m_EyeFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23945");
 }
 
 void HL2Stream::InitializeResearchModeSensors()

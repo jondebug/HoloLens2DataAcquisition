@@ -363,10 +363,14 @@ def main_function(path, HOST):
     ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,
                                             True)
     ahat_extr_receiver.start_socket()
-
-    eye_receiver = EyeReceiverThread(HOST)
-    eye_receiver.start_socket()
-    eye_receiver.start_listen()
+    ################ testing eye gaze ###################
+    # video_receiver = None
+    # ahat_extr_receiver = None
+    eye_receiver = None
+    #####################################################
+    # eye_receiver = EyeReceiverThread(HOST)
+    # eye_receiver.start_socket()
+    # eye_receiver.start_listen()
 
     video_receiver.start_listen()
     ahat_extr_receiver.start_listen()
@@ -381,15 +385,14 @@ def main_function(path, HOST):
         w2 = csv.writer(f2)
 
         while True:
-            if np.any(eye_receiver.latest_frame):
-                eye_data = eye_receiver.latest_frame
+            if eye_receiver and np.any(eye_receiver.latest_header):
+                eye_data = eye_receiver.latest_header
                 with open(output_path / 'eye_data.txt', 'w') as f_eye:
                     w_eye = csv.writer(f_eye)
                     print(eye_data)
                     w_eye.writerow([eye_data])
 
-
-            if np.any(video_receiver.latest_frame):
+            if video_receiver is not None and np.any(video_receiver.latest_frame):
                 # save_count_pv += 1
                 latest_frame = video_receiver.latest_frame
                 pv_hdr = video_receiver.latest_header
