@@ -45,6 +45,7 @@
     <ClCompile Include="Cannon\MixedReality.cpp">
       <Filter>Cannon</Filter>
     </ClCompile>
+    <ClCompile Include="accessEyeGaze.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HL2RmStreamUnityPlugin.h" />
@@ -90,5 +91,6 @@
     <ClInclude Include="Cannon\MixedReality.h">
       <Filter>Cannon</Filter>
     </ClInclude>
+    <ClInclude Include="accessEyeGaze.h" />
   </ItemGroup>
 </Project>

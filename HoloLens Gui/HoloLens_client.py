@@ -368,9 +368,9 @@ def main_function(path, HOST):
     # ahat_extr_receiver = None
     eye_receiver = None
     #####################################################
-    # eye_receiver = EyeReceiverThread(HOST)
-    # eye_receiver.start_socket()
-    # eye_receiver.start_listen()
+    eye_receiver = EyeReceiverThread(HOST)
+    eye_receiver.start_socket()
+    eye_receiver.start_listen()
 
     video_receiver.start_listen()
     ahat_extr_receiver.start_listen()

@@ -9,9 +9,9 @@
 //
 //*********************************************************
 // Author: Casey Meekhof cmeekhof@microsoft.com
-
-#include "pch.h"
-#include "MixedReality.h"
+ 
+#include <pch.h>
+//#include "./Cannon/MixedReality.h"
 #include "Common/Timer.h"
 #include "Common/FileUtilities.h"
 
@@ -28,6 +28,7 @@
 #include <set>
 #include <thread>
 #include <mutex>
+
 
 using namespace DirectX;
 using namespace std;
@@ -84,10 +85,7 @@ bool MixedReality::EnableMixedReality()
 	if (!IsAvailable())
 		return false;
 
-	/*winrt::Windows::UI::Core::CoreWindow temp_val_1 = */
-	//winrt::Windows::UI::Core::CoreWindow::GetForCurrentThread().Dispatcher().ProcessEvents(winrt::Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
-	auto temp_val_2 = winrt::Windows::UI::Core::CoreWindow::GetForCurrentThread();
-	m_holoSpace = winrt::Windows::Graphics::Holographic::HolographicSpace::CreateForCoreWindow(temp_val_2);
+	m_holoSpace = winrt::Windows::Graphics::Holographic::HolographicSpace::CreateForCoreWindow(winrt::Windows::UI::Core::CoreWindow::GetForCurrentThread());
 	if (!m_holoSpace)
 		return false;
 
