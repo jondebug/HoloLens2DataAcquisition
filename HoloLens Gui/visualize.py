@@ -110,10 +110,12 @@ def visualize(w_path):
     pv_width,pv_height = get_sensor_size(w_path)
     ahat_width,ahat_height = 512,512
     lt_width,lt_height = 320,288
-    output_image = np.zeros((max(pv_height, ahat_height), pv_width + ahat_width, 3))
-
+    if(flags["AHaT_depth"] == True):
+        output_image = np.zeros((max(pv_height, ahat_height), pv_width + ahat_width, 3))
+    elif(flags["long_depth"] == True):
+        output_image = np.zeros((max(pv_height, lt_height), pv_width + lt_width, 3))
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter(original_path +'.avi', fourcc, 20, (output_image.shape[1],output_image.shape[0]))
+    video = cv2.VideoWriter(original_path +str('/video.avi'), fourcc, 15, (output_image.shape[1],output_image.shape[0]))
 
     for timestamp in sorted(all_images.keys()):
         timestamp = str(timestamp)
@@ -136,9 +138,8 @@ def visualize(w_path):
                 if (flags["long_depth"] == True):
                     temp = LT_images.get(timestamp)
                     if (temp is not None):
-                       LT_image = cv2.normalize(temp, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+                       LT_image = cv2.normalize(temp, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
                        lt_img = True
-
             if (flags["front_left"] == True):
                 if(LF_images.get(timestamp) is not None):
                     LF_image = LF_images[timestamp]
@@ -171,11 +172,17 @@ def visualize(w_path):
                     eh_img = True
 
             all_flags = int(pv_img) + int(lf_img) + int(rf_img) + int(ll_img) + int(rr_img) + int(eh_img)
-            if(flags["PV"] and flags["AHaT_depth"] and pv_img and ahat_img):
-                output_image = np.zeros((max(pv_height,ahat_height), pv_width+ahat_width,3)).astype(np.uint8)
-                output_image[:,:,:] = (255,255,255)
-                output_image[:pv_height, :pv_width,:3] = pv_image
-                output_image[:ahat_height, pv_width:pv_width + ahat_width, :3] = ahat_image
+            if(flags["PV"] and ((flags["AHaT_depth"] and pv_img and ahat_img) or flags["long_depth"] and pv_img and lt_img)):
+                if (flags["AHaT_depth"] == True):
+                    output_image = np.zeros((max(pv_height, ahat_height), pv_width + ahat_width, 3)).astype(np.uint8)
+                    output_image[:, :, :] = (0, 0, 0)
+                    output_image[:pv_height, :pv_width, :3] = pv_image
+                    output_image[:ahat_height, pv_width:pv_width + ahat_width, :3] = ahat_image
+                elif (flags["long_depth"] == True):
+                    output_image = np.zeros((max(pv_height, lt_height), pv_width + lt_width, 3)).astype(np.uint8)
+                    output_image[:, :, :] = (0, 0, 0)
+                    output_image[:pv_height, :pv_width, :3] = pv_image
+                    output_image[:lt_height, pv_width:pv_width + lt_width, :3] = LT_image
             # elif (flags["PV"] and flags["long_depth"] and pv_img and lt_img):
             #     output_image = np.zeros((max(pv_height, lt_height), pv_width + lt_width, 3)).astype(np.uint8)
             #     output_image[:, :, :] = (255, 255, 255)
@@ -185,12 +192,12 @@ def visualize(w_path):
                 #numpy_horizontal_concat1 = np.concatenate((pv_image, ahat_image), axis=1)
                 #numpy_horizontal_concat2 = np.concatenate((eye_hand_image, LL_image, RR_image), axis=1)
                 #numpy_vertical_concat = np.concatenate((numpy_horizontal_concat1, numpy_horizontal_concat2), axis=0)
-                #video.write(output_image)
+                video.write(output_image)
                # cv2.imshow('Hololens2 stream visualizer', numpy_horizontal_concat1)
                 cv2.imshow("frame",output_image)
                 if cv2.waitKey(20) & 0xFF == ord('q'):
                     break
-        video.release()
+    video.release()
 
 
 #visualize("C:\HoloLens\Drawer\Table_Gloves_Eviatar_08052022_1159")
