@@ -1,6 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "winrt/base.h"
+#include <Windows.h>
 //#include <winrt/Windows.Foundation.Collections.0.h>
 //#include <winrt/Windows.Foundation.h>
 #include "winrt/Windows.UI.Input.Spatial.h"
@@ -14,6 +15,7 @@
 #include <fstream>
 #include <iomanip>
 
+
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Media::Capture;
 using namespace winrt::Windows::Media::Capture::Frames;
@@ -23,6 +25,7 @@ using namespace winrt::Windows::Networking::Sockets;
 using namespace winrt::Windows::Storage::Streams;
 using namespace DirectX;
 using namespace winrt::Windows::Storage;
+using namespace winrt::Windows::ApplicationModel;
 
 
 
@@ -248,10 +251,10 @@ IAsyncAction EyeGazeStreamer::InitializeAsync(
 
 	m_streamingEnabled = true;
 	//########### remove this ##############
-	m_mixedReality.EnableMixedReality();
-	OutputDebugStringW(L"finished enabling mixed reality");
-	m_mixedReality.EnableEyeTracking();
-	OutputDebugStringW(L"finished enable eye tracker");
+	//m_mixedReality.EnableMixedReality();
+	//OutputDebugStringW(L"finished enabling mixed reality");
+	//m_mixedReality.EnableEyeTracking();
+	//OutputDebugStringW(L"finished enable eye tracker");
 	//#####################################
 	StartEyeStreamServer();
 	m_pStreamThread = new std::thread(EyeGazeStreamer::GetAndSendThread, this);
@@ -290,14 +293,23 @@ IAsyncAction EyeGazeStreamer::DumpEyesToFile() {
 		std::wstring datetime = SetDateTimePath();
 		DumpToDisk(m_archiveFolder, datetime);
 	}
-
 }
 
 void EyeGazeStreamer::GetAndSendThread(EyeGazeStreamer* pProcessor) {
 	OutputDebugString(L"EyeStreamer::CameraStreamThread: Starting eye streaming thread.\n");
 
-	//pProcessor->m_mixedReality.EnableMixedReality();
-	//pProcessor->m_mixedReality.EnableEyeTracking();
+	//Windows::ApplicationModel::Core::CoreApplication::MainView->CoreWindow->Dispatcher->RunAsync(CoreDispatcherPriority::Normal,
+	//ref new Windows::UI::Core::DispatchedHandler([this]()
+	//	{
+	//		//pProcessor->m_mixedReality.EnableMixedReality();
+	//		//pProcessor->m_mixedReality.EnableEyeTracking();
+
+	//	}));
+
+
+
+
+
 	while (!pProcessor->m_fExit)
 	{
 		//std::lock_guard<std::shared_mutex> reader_guard(m_frameMutex);

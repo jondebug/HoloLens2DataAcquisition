@@ -361,7 +361,7 @@ public:
 		static const unsigned targetTriangleCount = 250;
 
 		void GenerateChildNodes(const std::vector<Mesh::Vertex>& vertices, const std::vector<unsigned>& indices, unsigned currentDepth);
-		bool TestRayIntersection(const std::vector<Vertex>& vertices, const XMVECTOR& rayOriginInWorldSpace, const XMVECTOR& rayDirectionInWorldSpace, const XMMATRIX& worldTransform, float &distance, XMVECTOR& normalInLocalSpace, float maxDistance /*= std::numeric_limits<float>::max()*/, bool returnFurthest = false);
+		bool TestRayIntersection(const std::vector<Vertex>& vertices, const XMVECTOR& rayOriginInWorldSpace, const XMVECTOR& rayDirectionInWorldSpace, const XMMATRIX& worldTransform, float &distance, XMVECTOR& normalInLocalSpace, float maxDistance = 99999999/* = std::numeric_limits<float>::max()*/, bool returnFurthest = false);
 	};
 
 	struct Disc
@@ -396,7 +396,7 @@ public:
 	//  If the first disc has the same center point as the second disc, the caps will not be smoothed
 	void AppendGeometryForDiscs(const std::vector<Disc>& discs, const unsigned segmentCount, const DiscMode discMode = DiscMode::Circle);
 
-	bool TestRayIntersection(const XMVECTOR& rayOriginInWorldSpace, const XMVECTOR& rayDirectionInWorldSpace, const XMMATRIX& worldTransform, float &distance, XMVECTOR &normal, float maxDistance /*= std::numeric_limits<float>::max()*/, bool returnFurthest = false);
+	bool TestRayIntersection(const XMVECTOR& rayOriginInWorldSpace, const XMVECTOR& rayDirectionInWorldSpace, const XMMATRIX& worldTransform, float &distance, XMVECTOR &normal, float maxDistance = 99999999, bool returnFurthest = false);
 	bool TestRayIntersection(const XMVECTOR& rayOriginInWorldSpace, const XMVECTOR& rayDirectionInWorldSpace, const XMMATRIX& worldTransform, float& distance);
 	bool TestPointInside(const XMVECTOR& pointInWorldSpace, const XMMATRIX& worldTransform);	// This currently only tests against the bounding box
 	const BoundingBox& GetBoundingBox();

@@ -42,8 +42,8 @@
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
     <AppContainerApplication>true</AppContainerApplication>
     <ApplicationType>Windows Store</ApplicationType>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.18362.0</WindowsTargetPlatformMinVersion>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -248,6 +248,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="accessEyeGaze.h" />
     <ClInclude Include="Cannon\AnimatedVector.h" />
     <ClInclude Include="Cannon\Common\FileUtilities.h" />
     <ClInclude Include="Cannon\Common\FilterDoubleExponential.h" />
@@ -292,6 +293,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ResearchModeFrameProcessor.cpp" />
+    <ClCompile Include="accessEyeGaze.cpp" />
     <ClCompile Include="Streamer.cpp" />
     <ClCompile Include="TimeConverter.cpp" />
     <ClCompile Include="VideoCameraStreamer.cpp" />

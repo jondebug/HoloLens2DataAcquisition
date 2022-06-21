@@ -301,7 +301,7 @@ void Streamer::Send(
     ResearchModeSensorType pSensorType)
 {
 #if DBG_ENABLE_INFO_LOGGING
-    OutputDebugStringW(L"Streamer::Send: Received frame for sending!\n");
+    //OutputDebugStringW(L"Streamer::Send: Received frame for sending!\n");
 #endif
 
     if (!m_streamSocket || !m_writer)

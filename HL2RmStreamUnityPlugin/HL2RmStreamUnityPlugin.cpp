@@ -1,6 +1,6 @@
 ﻿#include "pch.h"
 #include "HL2RmStreamUnityPlugin.h"
-
+#include "accessEyeGaze.h"
 #define DBG_ENABLE_VERBOSE_LOGGING 1
 #define DBG_ENABLE_INFO_LOGGING 1
 
@@ -27,7 +27,8 @@ void __stdcall HL2Stream::StartStreaming()
 	SpatialLocator m_locator = SpatialLocator::GetDefault();
 	m_worldOrigin = m_locator.CreateStationaryFrameOfReferenceAtCurrentLocation().CoordinateSystem();
 	OutputDebugStringW(L" general start straming");
-	InitializeEyeStreamerAsync();
+	//InitializeEyeStreamerAsync();
+	//accessEyeGaze();
 	InitializeResearchModeSensors();
 	InitializeResearchModeProcessing();
 
@@ -60,7 +61,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 		throw winrt::hresult(E_POINTER);
 	}
 
-	co_await m_videoFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23940");
+	co_await m_videoFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23940", L"23945");
 }
 
 winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeEyeStreamerAsync()

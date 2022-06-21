@@ -37,7 +37,7 @@ public:
 	{
 		m_fExit = true;
 		DumpEyesToFile();
-		m_pStreamThread->join();
+		//m_pStreamThread->join();
 		m_pEyeCollenctionThread->join();
 	}
 
