@@ -1,0 +1,6 @@
+from eye_stream_header import EYE_FRAME_STREAM, EYE_STREAM_HEADER_FORMAT
+
+print(EYE_STREAM_HEADER_FORMAT)
+tmp = EYE_FRAME_STREAM()
+print(EYE_FRAME_STREAM)
+print(tmp)

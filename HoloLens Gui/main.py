@@ -44,7 +44,7 @@ root.iconphoto(False, img)
 root.geometry('720x720')
 background_image = PhotoImage(file='faculty.png')
 
-Image_display = Label(root,image = background_image)
+Image_display = Label(root, image = background_image)
 Image_display.place(x=25, y=600)
 
 

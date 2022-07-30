@@ -73,6 +73,8 @@ class SensorType(Enum):
     RF_VLC = 5
 
 
+# super().__init__(host, EYE_STREAM_PORT, EYE_STREAM_HEADER_FORMAT,
+#                  EYE_FRAME_STREAM, False)
 class FrameReceiverThread(threading.Thread):
     def __init__(self, host, port, header_format, header_data, find_extrinsics):
         super(FrameReceiverThread, self).__init__()
@@ -176,6 +178,7 @@ class EyeReceiverThread(FrameReceiverThread):
             return
 
         data = struct.unpack(self.header_format, reply)
+        print(*data)
         eye_data_struct = self.header_data(*data)
         return eye_data_struct
 
@@ -380,17 +383,15 @@ def main_function(path, HOST):
     prev_timestamp_ahat = 0
 
     with open(output_path / 'pv.txt', 'w') as f1, open(output_path / 'Depth AHaT_rig2world.txt', 'w') as f2, \
-            open(output_path / 'Depth AHaT_lut.bin', 'w') as f4:
+            open(output_path / 'Depth AHaT_lut.bin', 'w') as f4,open(output_path / 'eye_data.csv', 'w') as f_eye:
         w1 = csv.writer(f1)
         w2 = csv.writer(f2)
+        w_eye = csv.writer(f_eye)
 
         while True:
             if eye_receiver and np.any(eye_receiver.latest_header):
                 eye_data = eye_receiver.latest_header
-                with open(output_path / 'eye_data.txt', 'w') as f_eye:
-                    w_eye = csv.writer(f_eye)
-                    print(eye_data)
-                    w_eye.writerow([eye_data])
+                w_eye.writerow([eye_data])
 
             if video_receiver is not None and np.any(video_receiver.latest_frame):
                 # save_count_pv += 1

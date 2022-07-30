@@ -61,7 +61,7 @@ winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeVideoFrameProcesso
 		throw winrt::hresult(E_POINTER);
 	}
 
-	co_await m_videoFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23940", L"23945");
+	co_await m_videoFrameProcessor->InitializeAsync(0, m_worldOrigin, L"23940"/*, L"23945"*/);
 }
 
 winrt::Windows::Foundation::IAsyncAction HL2Stream::InitializeEyeStreamerAsync()

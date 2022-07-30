@@ -19,14 +19,14 @@ const wchar_t VideoCameraStreamer::kSensorName[3] = L"PV";
 IAsyncAction VideoCameraStreamer::InitializeAsync(
     const long long minDelta,
     const SpatialCoordinateSystem& coordSystem,
-    std::wstring pv_portName, std::wstring eyeGaze_portName)
+    std::wstring pv_portName/*, std::wstring eyeGaze_portName*/)
 {
 #if DBG_ENABLE_INFO_LOGGING
     OutputDebugStringW(L"VideoCameraStreamer::InitializeAsync: Creating Streamer for Video Camera. \n");
 #endif
     m_worldCoordSystem = coordSystem;
     m_pv_portName = pv_portName;
-    m_eyeGaze_portName = eyeGaze_portName;
+    //m_eyeGaze_portName = eyeGaze_portName;
     m_minDelta = minDelta;
     //################ remove this ##################
     //m_mixedReality.EnableMixedReality();
@@ -153,37 +153,39 @@ void VideoCameraStreamer::OnFrameArrived(
     }
 }
 
-
-IAsyncAction VideoCameraStreamer::StartEyeStreamServer()
-{
-    try
-    {
-        // The ConnectionReceived event is raised when connections are received.
-        m_EyeGazeStreamSocketListener.ConnectionReceived({ this, &VideoCameraStreamer::OnEyeGazeConnectionReceived });
-
-        // Start listening for incoming TCP connections on the specified port. You can specify any port that's not currently in use.
-        // Every protocol typically has a standard port number. For example, HTTP is typically 80, FTP is 20 and 21, etc.
-        // For this example, we'll choose an arbitrary port number.
-        co_await m_EyeGazeStreamSocketListener.BindServiceNameAsync(m_eyeGaze_portName);
-        //m_streamSocketListener.Control().KeepAlive(true);
-
-        wchar_t msgBuffer[200];
-        swprintf_s(msgBuffer, L"EyeGazeStreamer::StartServer: Server is listening at %ls \n",
-            m_eyeGaze_portName.c_str());
-        OutputDebugStringW(msgBuffer);
-    }
-    catch (winrt::hresult_error const& ex)
-    {
-
-        SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
-        winrt::hstring message = webErrorStatus != SocketErrorStatus::Unknown ?
-            winrt::to_hstring((int32_t)webErrorStatus) : winrt::to_hstring(ex.to_abi());
-        OutputDebugStringW(L"VideoCameraStreamer::StartServer: Failed to open listener with ");
-        OutputDebugStringW(message.c_str());
-        OutputDebugStringW(L"\n");
-
-    }
-}
+//
+//IAsyncAction VideoCameraStreamer::StartEyeStreamServer()
+//{
+//    try
+//    {
+//        // The ConnectionReceived event is raised when connections are received.
+//        m_EyeGazeStreamSocketListener.ConnectionReceived({ this, &VideoCameraStreamer::OnEyeGazeConnectionReceived });
+//
+//        // Start listening for incoming TCP connections on the specified port. You can specify any port that's not currently in use.
+//        // Every protocol typically has a standard port number. For example, HTTP is typically 80, FTP is 20 and 21, etc.
+//        // For this example, we'll choose an arbitrary port number.
+//        co_await m_EyeGazeStreamSocketListener.BindServiceNameAsync(m_eyeGaze_portName);
+//        //m_streamSocketListener.Control().KeepAlive(true);
+//
+//        wchar_t msgBuffer[200];
+//        swprintf_s(msgBuffer, L"EyeGazeStreamer::StartServer: Server is listening at %ls \n",
+//            m_eyeGaze_portName.c_str());
+//        OutputDebugStringW(msgBuffer);
+//    }
+//    catch (winrt::hresult_error const& ex)
+//    {
+//
+//        SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
+//        winrt::hstring message = webErrorStatus != SocketErrorStatus::Unknown ?
+//            winrt::to_hstring((int32_t)webErrorStatus) : winrt::to_hstring(ex.to_abi());
+//        OutputDebugStringW(L"VideoCameraStreamer::StartServer: Failed to open listener with ");
+//        OutputDebugStringW(message.c_str());
+//        OutputDebugStringW(L"\n");
+//
+//    }
+//}
+//
+//
 
 
 
@@ -248,112 +250,112 @@ void VideoCameraStreamer::OnPvConnectionReceived(
 #endif
     }
 }
-
-void VideoCameraStreamer::OnEyeGazeConnectionReceived(
-    StreamSocketListener /* sender */,
-    StreamSocketListenerConnectionReceivedEventArgs args)
-{
-    try
-    {
-        m_EyeGazeStreamSocket = args.Socket();
-        m_writer = (winrt::Windows::Storage::Streams::DataWriter)args.Socket().OutputStream();
-        m_writer.UnicodeEncoding(UnicodeEncoding::Utf8);
-        m_writer.ByteOrder(ByteOrder::LittleEndian);
-
-        m_writeInProgress = false;
-#if DBG_ENABLE_INFO_LOGGING
-        OutputDebugStringW(L"VideoCameraStreamer::OnConnectionReceived: Received connection! \n");
-#endif
-    }
-    catch (winrt::hresult_error const& ex)
-    {
-#if DBG_ENABLE_ERROR_LOGGING
-        SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
-        winrt::hstring message = webErrorStatus != SocketErrorStatus::Unknown ?
-            winrt::to_hstring((int32_t)webErrorStatus) : winrt::to_hstring(ex.to_abi());
-        OutputDebugStringW(L"VideoCameraStreamer::StartServer: Failed to open listener with ");
-        OutputDebugStringW(message.c_str());
-        OutputDebugStringW(L"\n");
-#endif
-    }
-}
-
-HeTHaTEyeFrame VideoCameraStreamer::ReturnEyeGazeFrame() {
-
-    //float frameDelta = m_frameDeltaTimer.GetTime();
-    //m_frameDeltaTimer.Reset();
-
-    m_mixedReality.Update();
-    m_hands.UpdateFromMixedReality(m_mixedReality);
-
-    HeTHaTEyeFrame frame;
-    // Get head transform
-    frame.headTransform = m_hands.GetHeadTransform();
-    // Get hand joints transforms
-    for (int j = 0; j < (int)HandJointIndex::Count; ++j)
-    {
-        frame.leftHandTransform[j] = m_hands.GetOrientedJoint(0, HandJointIndex(j));
-    }
-
-    // Get timestamp
-    frame.timestamp = m_mixedReality.GetPredictedDisplayTime();
-
-    // Get eye gaze tracking data
-    if (m_mixedReality.IsEyeTrackingEnabled() && m_mixedReality.IsEyeTrackingActive())
-    {
-        frame.eyeGazePresent = true;
-        frame.eyeGazeOrigin = m_mixedReality.GetEyeGazeOrigin();
-        frame.eyeGazeDirection = m_mixedReality.GetEyeGazeDirection();
-        frame.eyeGazeDistance = 0.0f;
-        // Use surface mapping to compute the distance the user is looking at
-        if (m_mixedReality.IsSurfaceMappingActive())
-        {
-            float distance;
-            XMVECTOR normal;
-            if (m_mixedReality.GetSurfaceMappingInterface()->TestRayIntersection(frame.eyeGazeOrigin, frame.eyeGazeDirection, distance, normal))
-            {
-                frame.eyeGazeDistance = distance;
-            }
-        }
-    }
-    return frame;
-}
-void VideoCameraStreamer::AddFrame(HeTHaTEyeFrame&& frame)
-{
-    m_hethateyeLog.push_back(std::move(frame));
-}
-void VideoCameraStreamer::GetAndSendThread(VideoCameraStreamer* pProcessor) {
-    OutputDebugString(L"EyeStreamer::EyeStreamThread: Starting eye streaming thread.\n");
-
-    pProcessor->m_mixedReality.EnableMixedReality();
-    OutputDebugString(L"EyeStreamer::EyeStreamThread: Enabled mixed reality.\n");
-
-    pProcessor->m_mixedReality.EnableEyeTracking();
-    while (!pProcessor->m_fExit)
-    {
-        //std::lock_guard<std::shared_mutex> reader_guard(m_frameMutex);
-
-        HeTHaTEyeFrame frame = pProcessor->ReturnEyeGazeFrame();
-        long long timestamp = frame.timestamp;
-        //long long timestamp = pProcessor->m_latestFrame.timestamp;
-        //long long timestamp = pStreamer->m_converter.RelativeTicksToAbsoluteTicks(
-        //	 HundredsOfNanoseconds(frame.SystemRelativeTime().Value().count())).count();
-
-        if (timestamp != pProcessor->m_latestEyeGazeTimestamp)
-        {
-            long long delta = timestamp - pProcessor->m_latestEyeGazeTimestamp;
-            if (delta > pProcessor->m_minDelta)
-            {
-                pProcessor->AddFrame(std::move(frame));
-                pProcessor->m_latestEyeGazeTimestamp = timestamp;
-                pProcessor->SendEyeGazeFrame(frame, timestamp);
-                pProcessor->m_writeInProgress = false;
-            }
-        }
-    }
-
-
-}
+//
+//void VideoCameraStreamer::OnEyeGazeConnectionReceived(
+//    StreamSocketListener /* sender */,
+//    StreamSocketListenerConnectionReceivedEventArgs args)
+//{
+//    try
+//    {
+//        m_EyeGazeStreamSocket = args.Socket();
+//        m_writer = (winrt::Windows::Storage::Streams::DataWriter)args.Socket().OutputStream();
+//        m_writer.UnicodeEncoding(UnicodeEncoding::Utf8);
+//        m_writer.ByteOrder(ByteOrder::LittleEndian);
+//
+//        m_writeInProgress = false;
+//#if DBG_ENABLE_INFO_LOGGING
+//        OutputDebugStringW(L"VideoCameraStreamer::OnConnectionReceived: Received connection! \n");
+//#endif
+//    }
+//    catch (winrt::hresult_error const& ex)
+//    {
+//#if DBG_ENABLE_ERROR_LOGGING
+//        SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
+//        winrt::hstring message = webErrorStatus != SocketErrorStatus::Unknown ?
+//            winrt::to_hstring((int32_t)webErrorStatus) : winrt::to_hstring(ex.to_abi());
+//        OutputDebugStringW(L"VideoCameraStreamer::StartServer: Failed to open listener with ");
+//        OutputDebugStringW(message.c_str());
+//        OutputDebugStringW(L"\n");
+//#endif
+//    }
+//}
+//
+//HeTHaTEyeFrame VideoCameraStreamer::ReturnEyeGazeFrame() {
+//
+//    //float frameDelta = m_frameDeltaTimer.GetTime();
+//    //m_frameDeltaTimer.Reset();
+//
+//    m_mixedReality.Update();
+//    m_hands.UpdateFromMixedReality(m_mixedReality);
+//
+//    HeTHaTEyeFrame frame;
+//    // Get head transform
+//    frame.headTransform = m_hands.GetHeadTransform();
+//    // Get hand joints transforms
+//    for (int j = 0; j < (int)HandJointIndex::Count; ++j)
+//    {
+//        frame.leftHandTransform[j] = m_hands.GetOrientedJoint(0, HandJointIndex(j));
+//    }
+//
+//    // Get timestamp
+//    frame.timestamp = m_mixedReality.GetPredictedDisplayTime();
+//
+//    // Get eye gaze tracking data
+//    if (m_mixedReality.IsEyeTrackingEnabled() && m_mixedReality.IsEyeTrackingActive())
+//    {
+//        frame.eyeGazePresent = true;
+//        frame.eyeGazeOrigin = m_mixedReality.GetEyeGazeOrigin();
+//        frame.eyeGazeDirection = m_mixedReality.GetEyeGazeDirection();
+//        frame.eyeGazeDistance = 0.0f;
+//        // Use surface mapping to compute the distance the user is looking at
+//        if (m_mixedReality.IsSurfaceMappingActive())
+//        {
+//            float distance;
+//            XMVECTOR normal;
+//            if (m_mixedReality.GetSurfaceMappingInterface()->TestRayIntersection(frame.eyeGazeOrigin, frame.eyeGazeDirection, distance, normal))
+//            {
+//                frame.eyeGazeDistance = distance;
+//            }
+//        }
+//    }
+//    return frame;
+//}
+//void VideoCameraStreamer::AddFrame(HeTHaTEyeFrame&& frame)
+//{
+//    m_hethateyeLog.push_back(std::move(frame));
+//}
+//void VideoCameraStreamer::GetAndSendThread(VideoCameraStreamer* pProcessor) {
+//    OutputDebugString(L"EyeStreamer::EyeStreamThread: Starting eye streaming thread.\n");
+//
+//    pProcessor->m_mixedReality.EnableMixedReality();
+//    OutputDebugString(L"EyeStreamer::EyeStreamThread: Enabled mixed reality.\n");
+//
+//    pProcessor->m_mixedReality.EnableEyeTracking();
+//    while (!pProcessor->m_fExit)
+//    {
+//        //std::lock_guard<std::shared_mutex> reader_guard(m_frameMutex);
+//
+//        HeTHaTEyeFrame frame = pProcessor->ReturnEyeGazeFrame();
+//        long long timestamp = frame.timestamp;
+//        //long long timestamp = pProcessor->m_latestFrame.timestamp;
+//        //long long timestamp = pStreamer->m_converter.RelativeTicksToAbsoluteTicks(
+//        //	 HundredsOfNanoseconds(frame.SystemRelativeTime().Value().count())).count();
+//
+//        if (timestamp != pProcessor->m_latestEyeGazeTimestamp)
+//        {
+//            long long delta = timestamp - pProcessor->m_latestEyeGazeTimestamp;
+//            if (delta > pProcessor->m_minDelta)
+//            {
+//                pProcessor->AddFrame(std::move(frame));
+//                pProcessor->m_latestEyeGazeTimestamp = timestamp;
+//                pProcessor->SendEyeGazeFrame(frame, timestamp);
+//                pProcessor->m_writeInProgress = false;
+//            }
+//        }
+//    }
+//
+//
+//}
 
 void VideoCameraStreamer::CameraStreamThread(VideoCameraStreamer* pStreamer)
 {
@@ -362,7 +364,8 @@ void VideoCameraStreamer::CameraStreamThread(VideoCameraStreamer* pStreamer)
 #endif
     while (!pStreamer->m_fExit)
     {
-        std::lock_guard<std::shared_mutex> reader_guard(pStreamer->m_EyeGazeframeMutex);
+        //std::lock_guard<std::shared_mutex> reader_guard(pStreamer->m_EyeGazeframeMutex);
+        std::lock_guard<std::shared_mutex> reader_guard(pStreamer->m_PvframeMutex);
         if (pStreamer->m_latestPvFrame)
         {
             MediaFrameReference frame = pStreamer->m_latestPvFrame;
@@ -537,54 +540,55 @@ void VideoCameraStreamer::SendPvFrame(
 #endif
 
 }
-void VideoCameraStreamer::SendEyeGazeFrame(
-    HeTHaTEyeFrame pFrame, long long pTimestamp)
-{
-    OutputDebugStringW(L"EyeStreamer::SendFrame: Received eye for sending!\n");
-    if (!m_EyeGazeStreamSocket || !m_writer)
-    {
-        OutputDebugStringW(
-            L"VideoCameraStreamer::SendFrame: No connection.\n");
-    }
-    if (!m_streamingEnabled)
-    {
-        OutputDebugStringW(L"Streamer::SendFrame: Streaming disabled.\n");
-        return;
-    }
-    auto prevTimestamp = pFrame.timestamp;
-    auto absoluteTimestamp = m_converter.RelativeTicksToAbsoluteTicks(HundredsOfNanoseconds((long long)prevTimestamp)).count();
-
-
-    //m_writer.WriteBytes();
-    //std::vector<BYTE> EyeByteData;
-    auto ptr = reinterpret_cast<BYTE*>(&pFrame);
-    auto EyeByteData = std::vector<BYTE>(ptr, ptr + sizeof pFrame);
-    m_writeInProgress = false;
-
-    try
-    {
-        m_writer.WriteBytes(EyeByteData);
-        OutputDebugStringW(L"Streamer::SendFrame: Trying to store writer...\n");
-        m_writer.StoreAsync();
-    }
-    catch (winrt::hresult_error const& ex)
-    {
-        SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
-        if (webErrorStatus == SocketErrorStatus::ConnectionResetByPeer)
-        {
-            // the client disconnected!
-            m_writer == nullptr;
-            m_EyeGazeStreamSocket == nullptr;
-            m_writeInProgress = false;
-        }
-        winrt::hstring message = ex.message();
-        OutputDebugStringW(L"Streamer::SendFrame: Sending failed with ");
-        OutputDebugStringW(message.c_str());
-        OutputDebugStringW(L"\n");
-    }
-    OutputDebugStringW(L"Streamer::SendFrame: Frame sent!\n");
-    //this is how we rebuild the data on the client side: auto p_obj = reinterpret_cast<obj_t*>(&buffer[0]);
-}
+//
+//void VideoCameraStreamer::SendEyeGazeFrame(
+//    HeTHaTEyeFrame pFrame, long long pTimestamp)
+//{
+//    OutputDebugStringW(L"EyeStreamer::SendFrame: Received eye for sending!\n");
+//    if (!m_EyeGazeStreamSocket || !m_writer)
+//    {
+//        OutputDebugStringW(
+//            L"VideoCameraStreamer::SendFrame: No connection.\n");
+//    }
+//    if (!m_streamingEnabled)
+//    {
+//        OutputDebugStringW(L"Streamer::SendFrame: Streaming disabled.\n");
+//        return;
+//    }
+//    auto prevTimestamp = pFrame.timestamp;
+//    auto absoluteTimestamp = m_converter.RelativeTicksToAbsoluteTicks(HundredsOfNanoseconds((long long)prevTimestamp)).count();
+//
+//
+//    //m_writer.WriteBytes();
+//    //std::vector<BYTE> EyeByteData;
+//    auto ptr = reinterpret_cast<BYTE*>(&pFrame);
+//    auto EyeByteData = std::vector<BYTE>(ptr, ptr + sizeof pFrame);
+//    m_writeInProgress = false;
+//
+//    try
+//    {
+//        m_writer.WriteBytes(EyeByteData);
+//        OutputDebugStringW(L"Streamer::SendFrame: Trying to store writer...\n");
+//        m_writer.StoreAsync();
+//    }
+//    catch (winrt::hresult_error const& ex)
+//    {
+//        SocketErrorStatus webErrorStatus{ SocketError::GetStatus(ex.to_abi()) };
+//        if (webErrorStatus == SocketErrorStatus::ConnectionResetByPeer)
+//        {
+//            // the client disconnected!
+//            m_writer == nullptr;
+//            m_EyeGazeStreamSocket == nullptr;
+//            m_writeInProgress = false;
+//        }
+//        winrt::hstring message = ex.message();
+//        OutputDebugStringW(L"Streamer::SendFrame: Sending failed with ");
+//        OutputDebugStringW(message.c_str());
+//        OutputDebugStringW(L"\n");
+//    }
+//    OutputDebugStringW(L"Streamer::SendFrame: Frame sent!\n");
+//    //this is how we rebuild the data on the client side: auto p_obj = reinterpret_cast<obj_t*>(&buffer[0]);
+//}
 
 
 
