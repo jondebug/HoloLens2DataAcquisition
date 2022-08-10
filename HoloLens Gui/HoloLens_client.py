@@ -13,7 +13,8 @@ import time
 import os
 from tkinter import *
 from tkinter import messagebox
-from eye_stream_header import EYE_FRAME_STREAM, EYE_STREAM_HEADER_FORMAT
+from eye_stream_header import EYE_FRAME_STREAM, EYE_STREAM_HEADER_FORMAT, wrong_format
+import sys
 np.warnings.filterwarnings('ignore')
 
 # Definitions
@@ -58,7 +59,7 @@ LEFT_FRONT_STREAM_PORT = 23942
 RIGHT_FRONT_STREAM_PORT = 23943
 EYE_STREAM_PORT = 23945
 
-HOST = '132.69.210.49'  # 169.254.233.208'   # '169.254.189.82' #'192.168.1.242'
+HOST = '132.69.202.148'  # 169.254.233.208'   # '169.254.189.82' #'192.168.1.242'
 # '192.168.1.92'
 
 HundredsOfNsToMilliseconds = 1e-4
@@ -166,30 +167,37 @@ class EyeReceiverThread(FrameReceiverThread):
     def __init__(self, host):
         self.eye_flag = False
         self.prev_timestamp = 0
-        super().__init__(host, EYE_STREAM_PORT, EYE_STREAM_HEADER_FORMAT,
+        super().__init__(host, EYE_STREAM_PORT, EYE_STREAM_HEADER_FORMAT , #TODO: change back to EYE_STREAM_HEADER_FORMAT
                          EYE_FRAME_STREAM, False)
 
     def get_eye_data_from_socket(self):
         # read the header in chunks
+        #print(f"waiting for {self.header_size} bytes")
         reply = self.recvall(self.header_size)
-
         if not reply:
             print('ERROR: Failed to receive data from stream.')
             return
 
+        print(f"reply length: {len(reply)} \n")
+        #print(f"will try to cast this data to named tupple of size: {struct.calcsize(self.header_format)}")
         data = struct.unpack(self.header_format, reply)
-        print(*data)
+        print(f"length of unpacked data: {len(data)}")
+        #print(f"residue is: {reply[self.header_size:]}")
+        #print(f"data residue: {reply[self.header_size:]}")
+        #print("the unpacked data is:", *data, f"length is {len(data)} ")
         eye_data_struct = self.header_data(*data)
+        #print(eye_data_struct)
         return eye_data_struct
 
     def listen(self):
         while True:
             print("got frame from socket")
             self.latest_header = self.get_eye_data_from_socket()
+            print(f"received frame with timetamp {self.latest_header.timestamp}")
             self.eye_flag = True
 
-            assert (self.prev_timestamp != self.latest_header.Timestamp)
-            self.prev_timestamp = self.latest_header.Timestamp
+            assert (self.prev_timestamp != self.latest_header.timestamp)
+            self.prev_timestamp = self.latest_header.timestamp
 
 
 class VideoReceiverThread(FrameReceiverThread):
@@ -208,6 +216,8 @@ class VideoReceiverThread(FrameReceiverThread):
                                                                                    self.latest_header.PixelStride))
             assert (self.prev_timestamp != self.latest_header.Timestamp)
             self.prev_timestamp = self.latest_header.Timestamp
+            return #TODO: remove this return!!!!!!!!!
+
 
     def get_mat_from_header(self, header):
         pv_to_world_transform = np.array(header[7:24]).reshape((4, 4)).T
@@ -367,7 +377,7 @@ def main_function(path, HOST):
                                             True)
     ahat_extr_receiver.start_socket()
     ################ testing eye gaze ###################
-    # video_receiver = None
+    #video_receiver = None
     # ahat_extr_receiver = None
     eye_receiver = None
     #####################################################
@@ -381,17 +391,22 @@ def main_function(path, HOST):
     ahat_receiver = None
     prev_timestamp_pv = 0
     prev_timestamp_ahat = 0
-
+    prev_timestamp_eye_gaze = 0
     with open(output_path / 'pv.txt', 'w') as f1, open(output_path / 'Depth AHaT_rig2world.txt', 'w') as f2, \
-            open(output_path / 'Depth AHaT_lut.bin', 'w') as f4,open(output_path / 'eye_data.csv', 'w') as f_eye:
+            open(output_path / 'Depth AHaT_lut.bin', 'w') as f4, open(output_path / 'eye_data.csv', 'w') as f_eye:
         w1 = csv.writer(f1)
         w2 = csv.writer(f2)
         w_eye = csv.writer(f_eye)
-
+        w_eye.writerow([name for name in EYE_FRAME_STREAM._fields])
         while True:
-            if eye_receiver and np.any(eye_receiver.latest_header):
+
+            if eye_receiver is not None and np.any(eye_receiver.latest_header):
                 eye_data = eye_receiver.latest_header
-                w_eye.writerow([eye_data])
+                curr_eye_timestamp = eye_data.timestamp
+                if prev_timestamp_eye_gaze < curr_eye_timestamp:
+                    print(f"trying to save data with timestamp: {curr_eye_timestamp} to csv file")
+                    w_eye.writerow(eye_data)
+                    prev_timestamp_eye_gaze = curr_eye_timestamp
 
             if video_receiver is not None and np.any(video_receiver.latest_frame):
                 # save_count_pv += 1

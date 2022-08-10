@@ -1,22 +1,25 @@
 from collections import namedtuple, deque
 
-EYE_STREAM_HEADER_FORMAT = "@49f???q832f"# TODO: remove f at the end when we know how lni dont know hot
+wrong_format = "@2q881fcccc"
+
+EYE_STREAM_HEADER_FORMAT = "@2q16f4f4f4f416f416f16?" #only added the last 4 c's for allignment to cpp struct.
 
 EYE_FRAME_STREAM = namedtuple(
      'EYEStreamPacket',
+     #timestamp 2 x long long:
+     'timestamp timestamp_placekeeper0 '
+     #HeadTransform 16 x float:
      'HeadTransformM11 HeadTransformM12 HeadTransformM13 HeadTransformM14  '
      'HeadTransformM21 HeadTransformM22 HeadTransformM23 HeadTransformM24  '
      'HeadTransformM31 HeadTransformM32 HeadTransformM33 HeadTransformM34  '
      'HeadTransformM41 HeadTransformM42 HeadTransformM43 HeadTransformM44  '
+     #eye gaze origin 4 x float:
      'eyeGazeOriginM11 eyeGazeOriginM12 eyeGazeOriginM13 eyeGazeOriginM14  '
-     'eyeGazeOriginM21 eyeGazeOriginM22 eyeGazeOriginM23 eyeGazeOriginM24  '
-     'eyeGazeOriginM31 eyeGazeOriginM32 eyeGazeOriginM33 eyeGazeOriginM34  '
-     'eyeGazeOriginM41 eyeGazeOriginM42 eyeGazeOriginM43 eyeGazeOriginM44  '
-     'eyeGazeDirectionM11 eyeGazeDirectionM12 eyeGazeDirectionM13 eyeGazeDirectionM14  '
-     'eyeGazeDirectionM21 eyeGazeDirectionM22 eyeGazeDirectionM23 eyeGazeDirectionM24  '
-     'eyeGazeDirectionM31 eyeGazeDirectionM32 eyeGazeDirectionM33 eyeGazeDirectionM34  '
-     'eyeGazeDirectionM41 eyeGazeDirectionM42 eyeGazeDirectionM43 eyeGazeDirectionM44  '
-     'eyeGazeDistance leftHandPresent rightHandPresent eyeGazePresent timestamp  '
+     #eye gaze direction 4 x float:
+     'eyeGazeDirectionM11 eyeGazeDirectionM12 eyeGazeDirectionM13 eyeGazeDirectionM14 '
+     #eye gaze distance 4 x float:
+     'eyeGazeDistance eyeGazeDistance_placekeeper0 eyeGazeDistance_placekeeper1 eyeGazeDistance_placekeeper2 '
+     #left hand transform 416 x float:
      'L_Palm11 L_Palm12 L_Palm13 L_Palm14 '
      'L_Palm21 L_Palm22 L_Palm23 L_Palm24 '
      'L_Palm31 L_Palm32 L_Palm33 L_Palm34 '
@@ -121,6 +124,7 @@ EYE_FRAME_STREAM = namedtuple(
      'L_PinkyTip21 L_PinkyTip22 L_PinkyTip23 L_PinkyTip24 '
      'L_PinkyTip31 L_PinkyTip32 L_PinkyTip33 L_PinkyTip34 '
      'L_PinkyTip41 L_PinkyTip42 L_PinkyTip43 L_PinkyTip44 '
+     #Right hand transform 416 x float:
      'R_Palm11 R_Palm12 R_Palm13 R_Palm14 '
      'R_Palm21 R_Palm22 R_Palm23 R_Palm24 '
      'R_Palm31 R_Palm32 R_Palm33 R_Palm34 '
@@ -225,5 +229,14 @@ EYE_FRAME_STREAM = namedtuple(
      'R_PinkyTip21 R_PinkyTip22 R_PinkyTip23 R_PinkyTip24 '
      'R_PinkyTip31 R_PinkyTip32 R_PinkyTip33 R_PinkyTip34 '
      'R_PinkyTip41 R_PinkyTip42 R_PinkyTip43 R_PinkyTip44 '
+     
+     #Boolean Parameters 3 x Bool: 
+     'leftHandPresent rightHandPresent eyeGazePresent '
+     
+     #boolean placekeepers 13 x Bool:
+     'Bool_pk_0 Bool_pk_1 Bool_pk_2 Bool_pk_3 '
+     'Bool_pk_4 Bool_pk_5 Bool_pk_6 Bool_pk_7 '
+     'Bool_pk_8 Bool_pk_9 Bool_pk_10 Bool_pk_11 '
+     'Bool_pk_12 '
     )
 
