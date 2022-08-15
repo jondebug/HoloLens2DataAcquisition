@@ -60,6 +60,7 @@ def check_framerates(capture_path):
     try:
         head_hat_stream_path = next(head_hat_stream_path)
         timestamps = load_head_hand_eye_data(str(head_hat_stream_path))[0]
+        print(timestamps)
         hh_avg_delta = get_avg_delta(timestamps) * HundredsOfNsToMilliseconds
         print('Average hand/head delta: {:.3f}ms, fps: {:.3f}'.format(
             hh_avg_delta, 1/(hh_avg_delta * MillisecondsToSeconds)))
@@ -88,22 +89,34 @@ def load_head_hand_eye_data(csv_path):
     for i_frame, frame in enumerate(data):
         timestamps[i_frame] = frame[0]
         # head
-        head_transs[i_frame, :] = frame[1:17].reshape((4, 4))[:3, 3]
+        head_transs[i_frame, :] = np.array(frame[1:17].reshape((4, 4)))[:3, 3]
         # left hand
         left_hand_transs_available[i_frame] = (frame[17] == 1)
         left_start_id = 18
         for i_j in range(joint_count):
             j_start_id = left_start_id + 16 * i_j
-            j_trans = frame[j_start_id:j_start_id + 16].reshape((4, 4))[:3, 3]
+            #j_trans = frame[j_start_id:j_start_id + 16].reshape((4, 4))[:3, 3]
+            j_trans = np.array(frame[j_start_id:j_start_id + 16].reshape((4, 4))).T[:3, 3]
+            #j_trans = np.linalg.inv(np.array(frame[j_start_id:j_start_id + 16].reshape((4, 4))))[:3, 3]
+            #print(np.array(frame[j_start_id:j_start_id + 16].reshape((4, 4)).T))
+            #print(j_trans, "\n###############\n", )
+            #left_hand_transs[i_frame, i_j, :] = j_trans
             left_hand_transs[i_frame, i_j, :] = j_trans
+            # print(i_frame, f"left hand trans[{j_start_id}, {j_start_id + 16}]:", frame[j_start_id:j_start_id + 16])
+            # print("j_trans:", frame[j_start_id:j_start_id + 16].reshape((4, 4)))
+
         # right hand
         right_hand_transs_available[i_frame] = (
             frame[left_start_id + joint_count * 4 * 4] == 1)
         right_start_id = left_start_id + joint_count * 4 * 4 + 1
         for i_j in range(joint_count):
             j_start_id = right_start_id + 16 * i_j
-            j_trans = frame[j_start_id:j_start_id + 16].reshape((4, 4))[:3, 3]
+            #j_trans = frame[j_start_id:j_start_id + 16].reshape((4, 4))[:3, 3]
+            j_trans = np.array(frame[j_start_id:j_start_id + 16].reshape((4, 4))).T[:3, 3]
+            #j_trans = np.linalg.inv(np.array(frame[j_start_id:j_start_id + 16].reshape((4, 4))))[:3, 3]
             right_hand_transs[i_frame, i_j, :] = j_trans
+            #print("right hand trans:", j_trans)
+
 
         assert(j_start_id + 16 == 851)
         gaze_available[i_frame] = (frame[851] == 1)

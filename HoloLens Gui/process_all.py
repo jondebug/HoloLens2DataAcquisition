@@ -14,7 +14,7 @@ from save_pclouds import save_pclouds
 from convert_images import convert_images
 
 
-def process_all(w_path, project_hand_eye=False):
+def process_all(w_path, project_hand_eye=True):
     # Extract all tar
     for tar_fname in w_path.glob("*.tar"):
         print(f"Extracting {tar_fname}")
@@ -28,7 +28,8 @@ def process_all(w_path, project_hand_eye=False):
         # Convert images
         convert_images(w_path)
 
-        # Project
+    # Project
+    if (w_path / "PV").exists():
         if project_hand_eye:
             project_hand_eye_to_pv(w_path)
 # Process depth if recorded
@@ -39,8 +40,10 @@ def process_all(w_path, project_hand_eye=False):
     print("")
     check_framerates(w_path)
 
-#
-# if __name__ == '__main__':
+
+if __name__ == '__main__':
+    w_path = Path('C:\HoloLens\Clothet\Floor_Gloves_Eviatar_15082022_1604')
+    process_all(w_path, project_hand_eye=True)
 #     parser = argparse.ArgumentParser(description='Process recorded data.')
 #     parser.add_argument("--recording_path", required=True,
 #                         help="Path to recording folder")

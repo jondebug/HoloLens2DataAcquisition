@@ -1,20 +1,23 @@
 from collections import namedtuple, deque
 
+recorder_eye_frame_bytes = 3439
+recorder_eye_frame_num_fields = 861
+RECORDER_EYE_STREAM_FORMAT = '@1q16f1B416f1B416f1B4f4f1f'
 RECORDER_EYE_FRAME_STREAM = namedtuple(
     'EYEStreamPacket',
-    # timestamp 2 x long long:
+    # timestamp 2 x long long = 8B:
     'timestamp '
     
-    # HeadTransform 16 x float:
+    # HeadTransform 16 x float = 64B:
     'HeadTransformM11 HeadTransformM12 HeadTransformM13 HeadTransformM14  '
     'HeadTransformM21 HeadTransformM22 HeadTransformM23 HeadTransformM24  '
     'HeadTransformM31 HeadTransformM32 HeadTransformM33 HeadTransformM34  '
     'HeadTransformM41 HeadTransformM42 HeadTransformM43 HeadTransformM44  '
     
-    #left hand trans:
+    #left hand trans: bool = 1B:
     'leftHandPresent '
     
-    # left hand transform 416 x float:
+    # left hand transform 416 x float = 1664B:
     'L_Palm11 L_Palm12 L_Palm13 L_Palm14 '
     'L_Palm21 L_Palm22 L_Palm23 L_Palm24 '
     'L_Palm31 L_Palm32 L_Palm33 L_Palm34 '
@@ -120,11 +123,11 @@ RECORDER_EYE_FRAME_STREAM = namedtuple(
     'L_PinkyTip31 L_PinkyTip32 L_PinkyTip33 L_PinkyTip34 '
     'L_PinkyTip41 L_PinkyTip42 L_PinkyTip43 L_PinkyTip44 '
     
-    #right hand transform available
+    #right hand transform available = 1B :
     'rightHandPresent '
     
     
-    # Right hand transform 416 x float:
+    # Right hand transform 416 x float = 1664B: 
     'R_Palm11 R_Palm12 R_Palm13 R_Palm14 '
     'R_Palm21 R_Palm22 R_Palm23 R_Palm24 '
     'R_Palm31 R_Palm32 R_Palm33 R_Palm34 '
@@ -230,15 +233,15 @@ RECORDER_EYE_FRAME_STREAM = namedtuple(
     'R_PinkyTip31 R_PinkyTip32 R_PinkyTip33 R_PinkyTip34 '
     'R_PinkyTip41 R_PinkyTip42 R_PinkyTip43 R_PinkyTip44 '
 
-    # gaze available: 
+    # gaze available: Bool = 1B: 
     ' eyeGazePresent '
     
     
-    # eye gaze origin 4 x float:
+    # eye gaze origin 4 x float = 16B:
     'eyeGazeOriginM11 eyeGazeOriginM12 eyeGazeOriginM13 eyeGazeOriginM14  '
-    # eye gaze direction 4 x float:
+    # eye gaze direction 4 x float = 16B:
     'eyeGazeDirectionM11 eyeGazeDirectionM12 eyeGazeDirectionM13 eyeGazeDirectionM14 '
-    # eye gaze distance 4 x float:
+    # eye gaze distance 1 x float = 4B:
     'eyeGazeDistance '
 
 )

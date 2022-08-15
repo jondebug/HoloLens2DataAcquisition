@@ -25,6 +25,7 @@ Second_font = ("Comic Sans MS", 10, "bold")
 last_font = ("Comic Sans MS", 14, "bold")
 path_pv = ''
 path_AHAT = ''
+path_LT = ''
 updated_path = ''
 path = ''
 fullList = []
@@ -80,7 +81,7 @@ who_built.place(x=55, y=260)
 hololens_ip = Label(root,text = "insert HoloLens ip:", font = last_font)
 hololens_ip.place(x=55,y=470)
 ip = tk.Entry(root)
-ip.insert(-1,"132.69.202.148")
+ip.insert(-1,"132.69.202.189")
 ip.place(x=280,y=480)
 
 
@@ -209,7 +210,7 @@ def buildingPath(FullList):
     global updated_path
     global path_pv
     global path_AHAT
-    namesList = ["pv", "Depth AHat"]
+    namesList = ["pv", "Depth Long Throw"]
     os.chdir(FullList[0])
     os.makedirs(FullList[1],exist_ok=True)
     new_Folder = ""
@@ -229,8 +230,8 @@ def buildingPath(FullList):
         os.mkdir(names)
 
     path_pv = updated_path + "\\" + namesList[0]
-    path_AHAT = updated_path + "\\" + namesList[1]
-
+    #path_AHAT = updated_path + "\\" + namesList[1]
+    path_LT = updated_path + "\\" + namesList[1]
 photo = PhotoImage(file="fresh.png")
 show = Label(root, image=photo)
 show.place(x=80, y=20)

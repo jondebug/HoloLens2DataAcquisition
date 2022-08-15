@@ -13,7 +13,9 @@ import time
 import os
 from tkinter import *
 from tkinter import messagebox
-from eye_stream_header import EYE_FRAME_STREAM, EYE_STREAM_HEADER_FORMAT, wrong_format
+from eye_stream_header import EYE_FRAME_STREAM, EYE_STREAM_HEADER_FORMAT
+from eye_stream_header_recorder_format import RECORDER_EYE_FRAME_STREAM, recorder_eye_frame_bytes
+from transform_eye_frame_to_recorder_eye_frame import transform_eye_frame_to_recorder_eye_frame
 import sys
 np.warnings.filterwarnings('ignore')
 
@@ -54,7 +56,8 @@ RM_FRAME_STREAM_HEADER = namedtuple(
 
 # Each port corresponds to a single stream type
 VIDEO_STREAM_PORT = 23940
-AHAT_STREAM_PORT = 23941
+#AHAT_STREAM_PORT = 23941
+LONG_THROW_STREAM_PORT = 23941
 LEFT_FRONT_STREAM_PORT = 23942
 RIGHT_FRONT_STREAM_PORT = 23943
 EYE_STREAM_PORT = 23945
@@ -191,9 +194,8 @@ class EyeReceiverThread(FrameReceiverThread):
 
     def listen(self):
         while True:
-            print("got frame from socket")
             self.latest_header = self.get_eye_data_from_socket()
-            print(f"received frame with timetamp {self.latest_header.timestamp}")
+            print(f"received eye gaze data with timetamp {self.latest_header.timestamp} \n")
             self.eye_flag = True
 
             assert (self.prev_timestamp != self.latest_header.timestamp)
@@ -210,13 +212,14 @@ class VideoReceiverThread(FrameReceiverThread):
     def listen(self):
         while True:
             self.latest_header, image_data = self.get_data_from_socket()
+            print("got pv frame from socket")
             self.pv_flag = True
             self.latest_frame = np.frombuffer(image_data, dtype=np.uint8).reshape((self.latest_header.ImageHeight,
                                                                                    self.latest_header.ImageWidth,
                                                                                    self.latest_header.PixelStride))
             assert (self.prev_timestamp != self.latest_header.Timestamp)
             self.prev_timestamp = self.latest_header.Timestamp
-            return #TODO: remove this return!!!!!!!!!
+
 
 
     def get_mat_from_header(self, header):
@@ -244,6 +247,37 @@ class AhatReceiverThread(FrameReceiverThread):
                     (self.latest_header.ImageHeight, self.latest_header.ImageWidth))
 
                 self.ahat_flag = True
+                assert (self.prev_timestamp != self.latest_header.Timestamp)
+                self.prev_timestamp = self.latest_header.Timestamp
+
+    def get_mat_from_header(self, header):
+        rig_to_world_transform = np.array(header[5:22]).reshape((4, 4)).T
+        return rig_to_world_transform
+
+class LongThrowReceiverThread(FrameReceiverThread):
+
+    def __init__(self, host, port, header_format, header_data, find_extrinsics=False):
+        super().__init__(host, port, header_format, header_data, find_extrinsics)
+        self.lt_flag = False
+        self.prev_timestamp = 0
+
+    def listen(self):
+        frame_counter = 0
+        while True:
+            if self.find_extrinsics:
+                if not np.any(self.lut):
+                    self.extrinsics_header, lut_data = self.get_extrinsics_from_socket(320, 288)
+                    self.lut = np.frombuffer(lut_data, dtype=np.float32).reshape((320 * 288, 3))
+                    print("got long throw LUT")
+            else:
+                frame_counter +=1
+                if frame_counter%20==0:
+                    print(f"got {frame_counter} long throw frames")
+                self.latest_header, image_data = self.get_data_from_socket()
+
+                self.latest_frame = np.frombuffer(image_data, dtype=np.uint16).reshape(
+                    (self.latest_header.ImageHeight, self.latest_header.ImageWidth))
+                self.lt_flag = True
                 assert (self.prev_timestamp != self.latest_header.Timestamp)
                 self.prev_timestamp = self.latest_header.Timestamp
 
@@ -373,9 +407,13 @@ def main_function(path, HOST):
     video_receiver = VideoReceiverThread(HOST)
     video_receiver.start_socket()
 
-    ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,
-                                            True)
-    ahat_extr_receiver.start_socket()
+    #ahat_extr_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
+    #ahat_extr_receiver.start_socket()
+	# long throw depth
+    lt_extr_receiver = None
+    lt_extr_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_EXTRINSICS_HEADER_FORMAT, RM_EXTRINSICS_HEADER,True)
+    lt_extr_receiver.start_socket()
+	
     ################ testing eye gaze ###################
     #video_receiver = None
     # ahat_extr_receiver = None
@@ -386,26 +424,37 @@ def main_function(path, HOST):
     eye_receiver.start_listen()
 
     video_receiver.start_listen()
-    ahat_extr_receiver.start_listen()
+    #ahat_extr_receiver.start_listen()
+    lt_extr_receiver.start_listen()
     first_line_flag = True
     ahat_receiver = None
+    lt_receiver = None
     prev_timestamp_pv = 0
     prev_timestamp_ahat = 0
+    prev_timestamp_lt = 0
     prev_timestamp_eye_gaze = 0
-    with open(output_path / 'pv.txt', 'w') as f1, open(output_path / 'Depth AHaT_rig2world.txt', 'w') as f2, \
-            open(output_path / 'Depth AHaT_lut.bin', 'w') as f4, open(output_path / 'eye_data.csv', 'w') as f_eye:
+    with open(output_path / 'pv.txt', 'w') as f1,open(output_path / 'eye_data_streamer.csv', 'w') as f_eye_streamer, open(output_path / 'head_hand_eye.csv', 'w') as f_eye_recorder, \
+	     open(output_path /'Depth Long Throw_lut.bin', 'w') as f5, \
+         open(output_path / 'Depth Long Throw_rig2world.txt', 'w') as f7:
+        # open(output_path / 'Depth AHaT_rig2world.txt', 'w') as f2, \
+        # open(output_path / 'Depth AHaT_lut.bin', 'w') \
         w1 = csv.writer(f1)
-        w2 = csv.writer(f2)
-        w_eye = csv.writer(f_eye)
-        w_eye.writerow([name for name in EYE_FRAME_STREAM._fields])
-        while True:
+        #w2 = csv.writer(f2)
+        w4 = csv.writer(f7)
+        w_eye_streamer = csv.writer(f_eye_streamer)
+        w_eye_recorder = csv.writer(f_eye_recorder)
 
+        #w_eye_streamer.writerow([name for name in EYE_FRAME_STREAM._fields])
+        #w_eye_recorder.writerow([name for name in RECORDER_EYE_FRAME_STREAM._fields])
+        while True:
             if eye_receiver is not None and np.any(eye_receiver.latest_header):
-                eye_data = eye_receiver.latest_header
-                curr_eye_timestamp = eye_data.timestamp
+                streamer_eye_data = eye_receiver.latest_header
+                curr_eye_timestamp = streamer_eye_data.timestamp
                 if prev_timestamp_eye_gaze < curr_eye_timestamp:
+                    recorder_format_eye_data = transform_eye_frame_to_recorder_eye_frame(streamer_eye_data)
                     print(f"trying to save data with timestamp: {curr_eye_timestamp} to csv file")
-                    w_eye.writerow(eye_data)
+                    w_eye_recorder.writerow(recorder_format_eye_data)
+                    w_eye_streamer.writerow(streamer_eye_data)
                     prev_timestamp_eye_gaze = curr_eye_timestamp
 
             if video_receiver is not None and np.any(video_receiver.latest_frame):
@@ -415,7 +464,7 @@ def main_function(path, HOST):
                 curr_pv_timestamp = pv_hdr.Timestamp
                 if prev_timestamp_pv < curr_pv_timestamp and video_receiver.pv_flag:
                     cv2.imwrite(str(output_path / "PV" / (str(curr_pv_timestamp) + ".png")), latest_frame)
-
+                    print("received PV frame with timestamp " +(str(curr_pv_timestamp))+'\n')
                     prev_timestamp_pv = curr_pv_timestamp
                     video_receiver.pv_flag = False
 
@@ -447,20 +496,87 @@ def main_function(path, HOST):
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
 
-            if ahat_receiver and np.any(ahat_receiver.latest_frame) and ahat_receiver.ahat_flag:
-                #
-                # save_count_ahat += 1
-                header = ahat_receiver.latest_header
-                curr_ahat_timestamp = header.Timestamp
-                # print("c_t: ", curr_ahat_timestamp, "p_t: ", prev_timestamp_ahat)
+            # if ahat_receiver and np.any(ahat_receiver.latest_frame) and ahat_receiver.ahat_flag:
+            #     #
+            #     # save_count_ahat += 1
+            #     header = ahat_receiver.latest_header
+            #     curr_ahat_timestamp = header.Timestamp
+            #     # print("c_t: ", curr_ahat_timestamp, "p_t: ", prev_timestamp_ahat)
+            #
+            #     cv2.imwrite(str(output_path) + r"\Depth AHaT\\" + str(curr_ahat_timestamp) + ".pgm",
+            #                 (ahat_receiver.latest_frame).astype(np.uint16))
+            #     prev_timestamp_ahat = curr_ahat_timestamp
+            #     ahat_receiver.ahat_flag = False
+            #
+            #     # depth_img = ahat_receiver.latest_frame
+            #     depth_hdr = ahat_receiver.latest_header
+            #     rig2world_transform = np.array([
+            #         depth_hdr.rig2worldTransformM11, depth_hdr.rig2worldTransformM12, depth_hdr.rig2worldTransformM13,
+            #         depth_hdr.rig2worldTransformM14,
+            #         depth_hdr.rig2worldTransformM21, depth_hdr.rig2worldTransformM22, depth_hdr.rig2worldTransformM23,
+            #         depth_hdr.rig2worldTransformM24,
+            #         depth_hdr.rig2worldTransformM31, depth_hdr.rig2worldTransformM32, depth_hdr.rig2worldTransformM33,
+            #         depth_hdr.rig2worldTransformM34,
+            #         depth_hdr.rig2worldTransformM41, depth_hdr.rig2worldTransformM42, depth_hdr.rig2worldTransformM43,
+            #         depth_hdr.rig2worldTransformM44]).reshape(4, 4)
+            #
+            #     rig2world_transform = np.transpose(rig2world_transform)
+            #     # change back to ahat timestamp
+            #     w2.writerow([curr_ahat_timestamp, rig2world_transform[0, 0], rig2world_transform[0, 1],
+            #                  rig2world_transform[0, 2], rig2world_transform[0, 3],
+            #                  rig2world_transform[1, 0], rig2world_transform[1, 1], rig2world_transform[1, 2],
+            #                  rig2world_transform[1, 3],
+            #                  rig2world_transform[2, 0], rig2world_transform[2, 1], rig2world_transform[2, 2],
+            #                  rig2world_transform[2, 3],
+            #                  rig2world_transform[3, 0], rig2world_transform[3, 1], rig2world_transform[3, 2],
+            #                  rig2world_transform[3, 3]])
 
-                cv2.imwrite(str(output_path) + r"\Depth AHaT\\" + str(curr_ahat_timestamp) + ".pgm",
-                            (ahat_receiver.latest_frame).astype(np.uint16))
-                prev_timestamp_ahat = curr_ahat_timestamp
-                ahat_receiver.ahat_flag = False
+            # if ahat_extr_receiver and np.any(ahat_extr_receiver.lut):
+            #     ahat_extr_receiver.socket.close()
+            #     ahat_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_STREAM_HEADER_FORMAT,
+            #                                        RM_FRAME_STREAM_HEADER)
+            #
+            #     ahat_receiver.extrinsics_header = ahat_extr_receiver.extrinsics_header
+            #     # ahat_receiver.lut = ahat_extr_receiver.lut
+            #     ahat_extr_receiver.lut.tofile(f4)
+            #
+            #     depth_hdr = ahat_receiver.extrinsics_header
+            #     rig2cam_transform = np.array([
+            #         depth_hdr.rig2camTransformM11, depth_hdr.rig2camTransformM12, depth_hdr.rig2camTransformM13,
+            #         depth_hdr.rig2camTransformM14,
+            #         depth_hdr.rig2camTransformM21, depth_hdr.rig2camTransformM22, depth_hdr.rig2camTransformM23,
+            #         depth_hdr.rig2camTransformM24,
+            #         depth_hdr.rig2camTransformM31, depth_hdr.rig2camTransformM32, depth_hdr.rig2camTransformM33,
+            #         depth_hdr.rig2camTransformM34,
+            #         depth_hdr.rig2camTransformM41, depth_hdr.rig2camTransformM42, depth_hdr.rig2camTransformM43,
+            #         depth_hdr.rig2camTransformM44]).reshape(4, 4)
+            #
+            #     with open(output_path / 'Depth AHaT_extrinsics.txt', 'w') as f3:
+            #         w3 = csv.writer(f3)
+            #         w3.writerow([rig2cam_transform[0, 0], rig2cam_transform[0, 1],
+            #                      rig2cam_transform[0, 2], rig2cam_transform[0, 3],
+            #                      rig2cam_transform[1, 0], rig2cam_transform[1, 1], rig2cam_transform[1, 2],
+            #                      rig2cam_transform[1, 3],
+            #                      rig2cam_transform[2, 0], rig2cam_transform[2, 1], rig2cam_transform[2, 2],
+            #                      rig2cam_transform[2, 3],
+            #                      rig2cam_transform[3, 0], rig2cam_transform[3, 1], rig2cam_transform[3, 2],
+            #                      rig2cam_transform[3, 3]])
+            #
+            #     ahat_extr_receiver = None
+            #     ahat_receiver.start_socket()
+            #     ahat_receiver.start_listen()
+            # long throw depth
+            if lt_receiver and np.any(lt_receiver.latest_frame) and lt_receiver.lt_flag:
+                header = lt_receiver.latest_header
+                curr_lt_timestamp = header.Timestamp
+                if prev_timestamp_lt<curr_lt_timestamp:
+                    cv2.imwrite(str(output_path) +r"\Depth Long Throw\\" +str(curr_lt_timestamp) + ".pgm", (lt_receiver.latest_frame).astype(np.uint16))
+                    print("received long throw frame with timestamp" + (str(curr_lt_timestamp)))
+                prev_timestamp_lt = curr_lt_timestamp
+                lt_receiver.lt_flag = False
 
-                # depth_img = ahat_receiver.latest_frame
-                depth_hdr = ahat_receiver.latest_header
+               # depth_img = ahat_receiver.latest_frame
+                depth_hdr = lt_receiver.latest_header
                 rig2world_transform = np.array([
                     depth_hdr.rig2worldTransformM11, depth_hdr.rig2worldTransformM12, depth_hdr.rig2worldTransformM13,
                     depth_hdr.rig2worldTransformM14,
@@ -472,26 +588,20 @@ def main_function(path, HOST):
                     depth_hdr.rig2worldTransformM44]).reshape(4, 4)
 
                 rig2world_transform = np.transpose(rig2world_transform)
-                # change back to ahat timestamp
-                w2.writerow([curr_ahat_timestamp, rig2world_transform[0, 0], rig2world_transform[0, 1],
-                             rig2world_transform[0, 2], rig2world_transform[0, 3],
-                             rig2world_transform[1, 0], rig2world_transform[1, 1], rig2world_transform[1, 2],
-                             rig2world_transform[1, 3],
-                             rig2world_transform[2, 0], rig2world_transform[2, 1], rig2world_transform[2, 2],
-                             rig2world_transform[2, 3],
-                             rig2world_transform[3, 0], rig2world_transform[3, 1], rig2world_transform[3, 2],
-                             rig2world_transform[3, 3]])
+                w4.writerow([curr_lt_timestamp, rig2world_transform[0,0],rig2world_transform[0,1],rig2world_transform[0,2],rig2world_transform[0,3],
+                                                 rig2world_transform[1, 0],rig2world_transform[1,1],rig2world_transform[1,2],rig2world_transform[1,3],
+                                                 rig2world_transform[2, 0],rig2world_transform[2,1],rig2world_transform[2,2],rig2world_transform[2,3],
+                                                 rig2world_transform[3,0],rig2world_transform[3,1],rig2world_transform[3,2],rig2world_transform[3,3]])
 
-            if ahat_extr_receiver and np.any(ahat_extr_receiver.lut):
-                ahat_extr_receiver.socket.close()
-                ahat_receiver = AhatReceiverThread(HOST, AHAT_STREAM_PORT, RM_STREAM_HEADER_FORMAT,
-                                                   RM_FRAME_STREAM_HEADER)
+            if lt_extr_receiver and np.any(lt_extr_receiver.lut):
+                lt_extr_receiver.socket.close()
+                lt_receiver = LongThrowReceiverThread(HOST, LONG_THROW_STREAM_PORT, RM_STREAM_HEADER_FORMAT, RM_FRAME_STREAM_HEADER)
 
-                ahat_receiver.extrinsics_header = ahat_extr_receiver.extrinsics_header
-                # ahat_receiver.lut = ahat_extr_receiver.lut
-                ahat_extr_receiver.lut.tofile(f4)
+                lt_receiver.extrinsics_header = lt_extr_receiver.extrinsics_header
+                print("saving lt lut")
+                lt_extr_receiver.lut.tofile(f5)
 
-                depth_hdr = ahat_receiver.extrinsics_header
+                depth_hdr = lt_receiver.extrinsics_header
                 rig2cam_transform = np.array([
                     depth_hdr.rig2camTransformM11, depth_hdr.rig2camTransformM12, depth_hdr.rig2camTransformM13,
                     depth_hdr.rig2camTransformM14,
@@ -502,21 +612,24 @@ def main_function(path, HOST):
                     depth_hdr.rig2camTransformM41, depth_hdr.rig2camTransformM42, depth_hdr.rig2camTransformM43,
                     depth_hdr.rig2camTransformM44]).reshape(4, 4)
 
-                with open(output_path / 'Depth AHaT_extrinsics.txt', 'w') as f3:
-                    w3 = csv.writer(f3)
+
+                with open(output_path / 'Depth Long Throw_extrinsics.txt', 'w') as f6:
+                    w3 = csv.writer(f6)
                     w3.writerow([rig2cam_transform[0, 0], rig2cam_transform[0, 1],
-                                 rig2cam_transform[0, 2], rig2cam_transform[0, 3],
-                                 rig2cam_transform[1, 0], rig2cam_transform[1, 1], rig2cam_transform[1, 2],
-                                 rig2cam_transform[1, 3],
-                                 rig2cam_transform[2, 0], rig2cam_transform[2, 1], rig2cam_transform[2, 2],
-                                 rig2cam_transform[2, 3],
-                                 rig2cam_transform[3, 0], rig2cam_transform[3, 1], rig2cam_transform[3, 2],
-                                 rig2cam_transform[3, 3]])
+                                  rig2cam_transform[0, 2], rig2cam_transform[0, 3],
+                                  rig2cam_transform[1, 0], rig2cam_transform[1, 1], rig2cam_transform[1, 2],
+                                  rig2cam_transform[1, 3],
+                                  rig2cam_transform[2, 0], rig2cam_transform[2, 1], rig2cam_transform[2, 2],
+                                  rig2cam_transform[2, 3],
+                                  rig2cam_transform[3, 0], rig2cam_transform[3, 1], rig2cam_transform[3, 2],
+                                  rig2cam_transform[3, 3]])
 
-                ahat_extr_receiver = None
-                ahat_receiver.start_socket()
-                ahat_receiver.start_listen()
 
+                lt_extr_receiver = None
+                lt_receiver.start_socket()
+                lt_receiver.start_listen()
+				
+				
 if __name__ == "__main__":
     path = os.path.abspath(__file__)
     output_dir = os.path.join(path, "output_dir")

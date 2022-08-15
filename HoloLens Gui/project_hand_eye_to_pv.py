@@ -39,12 +39,15 @@ def load_pv_data(csv_path):
     for i_frame, frame in enumerate(lines[1:]):
         # Row format is
         # timestamp, focal length (2), transform PVtoWorld (4x4)
+#        print(i_frame, frame)
+
         if len(frame) > 3:
             frame = frame.split(',')
             frame_timestamps[i_frame] = int(frame[0])
             focal_lengths[i_frame, 0] = float(frame[1])
             focal_lengths[i_frame, 1] = float(frame[2])
             pv2world_transforms[i_frame] = np.array(frame[3:20]).astype(float).reshape((4, 4))
+            #print(i_frame, pv2world_transforms[i_frame])
 
     return (frame_timestamps, focal_lengths, pv2world_transforms,
             intrinsics_ox, intrinsics_oy, intrinsics_width, intrinsics_height)
@@ -61,12 +64,11 @@ def get_eye_gaze_point(gaze_data):
     # if no distance was recorded, set 1m by default
     dist = gaze_data[8] if gaze_data[8] > 0.0 else 1.0
     point = origin_homog + direction_homog * dist
-
     return point[:3]
 
 
 def project_hand_eye_to_pv(folder):
-    print("")
+    print("projecting hand eye")
     head_hat_stream_path = list(folder.glob('*_eye.csv'))[0]
     pv_info_path = list(folder.glob('*pv.txt'))[0]
     pv_paths = sorted(list((folder / 'PV').glob('*png')))
@@ -88,6 +90,7 @@ def project_hand_eye_to_pv(folder):
     principal_point = np.array([ox, oy])
 
     n_frames = len(pv_paths)
+    print("n_frames ", n_frames)
     output_folder = folder / 'eye_hands'
     output_folder.mkdir(exist_ok=True)
     for pv_id in range(n_frames):
@@ -104,7 +107,9 @@ def project_hand_eye_to_pv(folder):
                       [0, focal_lengths[pv_id][1], principal_point[1]],
                       [0, 0, 1]])
         try:
+
             Rt = np.linalg.inv(pv2world_transforms[pv_id])
+            Rt = pv2world_transforms[pv_id]
         except np.linalg.LinAlgError:
             print('No pv2world transform')
             continue
@@ -116,21 +121,31 @@ def project_hand_eye_to_pv(folder):
                  (right_hand_transs, right_hand_transs_available)]
         for hand_id, hand in enumerate(hands):
             transs, avail = hand
+            print(avail[hand_ts])
             if avail[hand_ts]:
-                for joint in transs[hand_ts]:
+                for joint_num, joint in enumerate(transs[hand_ts]):
+
                     hand_tr = joint.reshape((1, 3))
+                    print(hand_tr)
                     xy, _ = cv2.projectPoints(hand_tr, rvec, tvec, K, None)
                     ixy = (int(xy[0][0][0]), int(xy[0][0][1]))
                     ixy = (width - ixy[0], ixy[1])
+                    #print("hand:", hand_id, "joint_num: ", joint_num, " ixy: ",  ixy)
                     img = cv2.circle(img, ixy, radius=3, color=colors[hand_id])
 
         if gaze_available[hand_ts]:
             point = get_eye_gaze_point(gaze_data[hand_ts])
             xy, _ = cv2.projectPoints(point.reshape((1, 3)), rvec, tvec, K, None)
+            print("rvec:\n", rvec)
+            print("tvec:\n", tvec)
+
+            print("K:\n", K)
+
             ixy = (int(xy[0][0][0]), int(xy[0][0][1]))
             ixy = (width - ixy[0], ixy[1])
+            print("eye ixy: ", ixy)
             img = cv2.circle(img, ixy, radius=3, color=colors[2])
-
+        print(f"saving picture number {pv_id}")
         cv2.imwrite(str(output_folder / 'hands') + 'proj{}.png'.format(str(pv_id).zfill(4)), img)
 
 
