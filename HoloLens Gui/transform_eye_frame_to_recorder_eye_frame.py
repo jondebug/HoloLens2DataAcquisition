@@ -4,8 +4,9 @@ from eye_stream_header_recorder_format import RECORDER_EYE_FRAME_STREAM, recorde
 import struct
 
 def transform_eye_frame_to_recorder_eye_frame(streamer_eye_frame:EYE_FRAME_STREAM):
-    disk_space_allocation = bytearray([0 for i in range(recorder_eye_frame_num_fields)])
-    recorder_eye_frame = RECORDER_EYE_FRAME_STREAM(*disk_space_allocation)
+    disk_space_allocation = bytearray([0 for i in range(3448)]) #recorder_eye_frame_num_fields)])
+    formatted_disk_space_allocation = struct.unpack(RECORDER_EYE_STREAM_FORMAT, disk_space_allocation)
+    recorder_eye_frame = RECORDER_EYE_FRAME_STREAM(*formatted_disk_space_allocation)
     recorder_dict = recorder_eye_frame._asdict()
     streamer_dict = streamer_eye_frame._asdict()
 
@@ -19,10 +20,11 @@ def transform_eye_frame_to_recorder_eye_frame(streamer_eye_frame:EYE_FRAME_STREA
     return RECORDER_EYE_FRAME_STREAM(*recorder_dict.values())
 
 #
-#
-# streamer_eye_frame = EYE_FRAME_STREAM(*[i for i in range(878)])
-# disk_space_allocation = bytearray([0 for i in range(recorder_eye_frame_num_fields)])
-# recorder_eye_frame = RECORDER_EYE_FRAME_STREAM(*disk_space_allocation)
+# #
+# streamer_eye_frame = EYE_FRAME_STREAM(*[i+2**40 for i in range(878)])
+# disk_space_allocation = bytearray([0 for i in range(3448)])#recorder_eye_frame_num_fields)])
+# formatted_disk_space_allocation = struct.unpack(RECORDER_EYE_STREAM_FORMAT, disk_space_allocation)
+# recorder_eye_frame = RECORDER_EYE_FRAME_STREAM(*formatted_disk_space_allocation)
 # recorder_dict = recorder_eye_frame._asdict()
 # streamer_dict = streamer_eye_frame._asdict()
 #
