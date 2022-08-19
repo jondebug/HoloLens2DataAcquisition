@@ -5,7 +5,7 @@ recorder_eye_frame_num_fields = 861
 RECORDER_EYE_STREAM_FORMAT = '@1q16f1B416f1B416f1B4f4f1f'
 RECORDER_EYE_FRAME_STREAM = namedtuple(
     'EYEStreamPacket',
-    # timestamp 2 x long long = 8B:
+    # timestamp 1 x long long = 8B:
     'timestamp '
     
     # HeadTransform 16 x float = 64B:
