@@ -6,7 +6,7 @@
  IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
  PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
 """
-import cv2
+from cv2 import cv2
 import argparse
 import numpy as np
 from pathlib import Path
@@ -23,6 +23,7 @@ def process_timestamps(path):
 
 
 def load_pv_data(csv_path):
+    print(f"opening pv file {csv_path}")
     with open(csv_path) as f:
         lines = f.readlines()
 
@@ -69,7 +70,9 @@ def get_eye_gaze_point(gaze_data):
 
 def project_hand_eye_to_pv(folder):
     print("projecting hand eye")
-    head_hat_stream_path = list(folder.glob('*_eye.csv'))[0]
+    head_hat_stream_path = list(folder.glob('*_eye.csv'))[0] #TODO: change this to [0]
+    print(f"opening eye data file {head_hat_stream_path}")
+
     pv_info_path = list(folder.glob('*pv.txt'))[0]
     pv_paths = sorted(list((folder / 'PV').glob('*png')))
     assert(len(pv_paths))
@@ -79,6 +82,7 @@ def project_hand_eye_to_pv(folder):
      left_hand_transs, left_hand_transs_available,
      right_hand_transs, right_hand_transs_available,
      gaze_data, gaze_available) = load_head_hand_eye_data(head_hat_stream_path)
+    print([int(time) for time in timestamps])
 
     eye_str = " and eye gaze" if np.any(gaze_available) else ""
     print("Projecting hand joints{} to PV".format(eye_str))
@@ -86,7 +90,8 @@ def project_hand_eye_to_pv(folder):
     # load pv info
     (frame_timestamps, focal_lengths, pv2world_transforms,
      ox, oy, width, height) = load_pv_data(pv_info_path)
-
+    print(f"num images: {len(pv_paths)} number of pv.txt lines: {len(focal_lengths)}")
+    print("timestamps from pv.txt: \n", frame_timestamps)
     principal_point = np.array([ox, oy])
 
     n_frames = len(pv_paths)
@@ -99,6 +104,7 @@ def project_hand_eye_to_pv(folder):
         sample_timestamp = int(str(pv_path.name).replace('.png', ''))
 
         hand_ts = match_timestamp(sample_timestamp, timestamps)
+        print(f"pv timestamp is: {sample_timestamp} relevant eye timestamp is {hand_ts}")
         # print('Frame-hand delta: {:.3f}ms'.format((sample_timestamp - timestamps[hand_ts]) * 1e-4))
 
         img = cv2.imread(str(pv_path))
@@ -109,7 +115,6 @@ def project_hand_eye_to_pv(folder):
         try:
 
             Rt = np.linalg.inv(pv2world_transforms[pv_id])
-            Rt = pv2world_transforms[pv_id]
         except np.linalg.LinAlgError:
             print('No pv2world transform')
             continue
@@ -121,12 +126,12 @@ def project_hand_eye_to_pv(folder):
                  (right_hand_transs, right_hand_transs_available)]
         for hand_id, hand in enumerate(hands):
             transs, avail = hand
-            print(avail[hand_ts])
+            #print(avail[hand_ts])
             if avail[hand_ts]:
                 for joint_num, joint in enumerate(transs[hand_ts]):
 
                     hand_tr = joint.reshape((1, 3))
-                    print(hand_tr)
+                    #print(hand_tr)
                     xy, _ = cv2.projectPoints(hand_tr, rvec, tvec, K, None)
                     ixy = (int(xy[0][0][0]), int(xy[0][0][1]))
                     ixy = (width - ixy[0], ixy[1])
