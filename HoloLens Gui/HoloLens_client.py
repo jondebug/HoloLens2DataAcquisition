@@ -433,9 +433,13 @@ def main_function(path, HOST):
     prev_timestamp_ahat = 0
     prev_timestamp_lt = 0
     prev_timestamp_eye_gaze = 0
-    with open(output_path / 'pv.txt', 'w') as f1,open(output_path / 'eye_data_streamer.csv', 'w') as f_eye_streamer, open(output_path / 'head_hand_eye.csv', 'w') as f_eye_recorder, \
-	     open(output_path /'Depth Long Throw_lut.bin', 'w') as f5, \
-         open(output_path / 'Depth Long Throw_rig2world.txt', 'w') as f7:
+    with open(output_path / 'pv.txt', 'w', newline='') as f1,\
+            open(output_path / 'eye_data_streamer.csv', 'w', newline='') as f_eye_streamer,\
+            open(output_path / 'head_hand_eye.csv', 'w', newline='') as f_eye_recorder, \
+            open(output_path / 'Depth Long Throw_lut.bin', 'w', newline='') as f5, \
+            open(output_path / 'Depth Long Throw_rig2world.txt', 'w', newline='') as f7:
+
+
         # open(output_path / 'Depth AHaT_rig2world.txt', 'w') as f2, \
         # open(output_path / 'Depth AHaT_lut.bin', 'w') \
         w1 = csv.writer(f1)
@@ -453,7 +457,7 @@ def main_function(path, HOST):
                 if prev_timestamp_eye_gaze < curr_eye_timestamp:
                     recorder_format_eye_data = transform_eye_frame_to_recorder_eye_frame(streamer_eye_data)
                     print(f"trying to save data with timestamp: {curr_eye_timestamp} to csv file")
-                    w_eye_recorder.writerow(recorder_format_eye_data)
+                    w_eye_recorder.writerow([str(field) for field in recorder_format_eye_data]) #change all fields to strings before saving them.
                     w_eye_streamer.writerow(streamer_eye_data)
                     prev_timestamp_eye_gaze = curr_eye_timestamp
 
